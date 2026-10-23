@@ -47,7 +47,9 @@ def compile_report(raw, docs, evidence, verified_quotes=None):
         for row in rows:
             text = row.get('text', '')
             ids = row.get('evidenceIds', [])
-            if not isinstance(text, str) or not 20 <= len(text) <= 1800 or not ids or any(i not in byid for i in ids): raise ValueError('invalid bulletin evidence id')
+            if not isinstance(text, str) or not 20 <= len(text) <= 1800 or not isinstance(ids,list) or not ids or any(i not in byid for i in ids):
+                omitted+=1
+                continue
             refs = [byid[i] for i in ids]
             # Digits may change decimal separators, but cannot introduce values.
             normalize = lambda values: {v.replace(',', '.').lstrip('0') or '0' for v in values}
@@ -72,18 +74,25 @@ def compile_report(raw, docs, evidence, verified_quotes=None):
         value=raw.get(key,{})
         lines=[]
         for field,label in [('base','Cơ sở'),('up','Kịch bản tăng'),('down','Kịch bản giảm'),('invalidation','Điều kiện làm sai nhận định')]:
-            text=qualitative(value.get(field))
-            if re.search(r'\d',text):
+            try:
+                text=qualitative(value.get(field))
+                if re.search(r'\d',text) or not text.startswith('Nếu'):raise ValueError('unsupported outlook')
+            except (ValueError,AttributeError):
                 text='Nếu chưa có thêm dữ liệu kiểm chứng, chưa đủ căn cứ để đưa ra kịch bản này.'
                 omitted+=1
-            if not text.startswith('Nếu'): raise ValueError('outlook must be conditional')
             lines.append(label+': '+text)
         sections.append(heading+'\n'+'\n\n'.join(lines))
     for key,heading in [('watch','Tín hiệu cần theo dõi'),('limits','Giới hạn dữ liệu')]:
         values=raw.get(key)
-        if not isinstance(values,list) or not 1<=len(values)<=8:raise ValueError('invalid bulletin limits')
-        sections.append(heading+'\n'+'\n'.join('• '+qualitative(x) for x in values))
+        clean=[]
+        for text in values[:8] if isinstance(values,list) else []:
+            try:clean.append(qualitative(text))
+            except ValueError:omitted+=1
+        if not clean:clean=['Cần thêm dữ liệu mới cùng loại, cùng khu vực và thời điểm để đối chiếu.']
+        sections.append(heading+'\n'+'\n'.join('• '+x for x in clean))
     if not used or not fact_count: raise ValueError('no relevant evidence for bulletin')
     if omitted: sections.append('Một số thông tin chưa đủ căn cứ đã được lược bỏ; phạm vi phân tích chỉ dựa trên các dữ kiện có nguồn ở trên.')
     sources=[{'url':docs[i-1]['url'],'title':urlparse(docs[i-1]['url']).hostname} for i in used]
-    return {'quotes':[], 'report':{'direction':raw.get('direction','unknown'),'horizon':'1–2 tuần và 1–2 tháng','reason':'\n\n'.join(sections),'risk':qualitative(raw.get('risk')),'sources':sources,'evidence':[{'source':docs[e['sourceId']-1]['url'],'quote':e['text']} for e in cited]}}
+    try:risk=qualitative(raw.get('risk'))
+    except ValueError:risk='Nguồn có thể cập nhật chậm; dự báo phụ thuộc các điều kiện đã nêu.'
+    return {'quotes':[], 'report':{'direction':raw.get('direction','unknown'),'horizon':'1–2 tuần và 1–2 tháng','reason':'\n\n'.join(sections),'risk':risk,'sources':sources,'evidence':[{'source':docs[e['sourceId']-1]['url'],'quote':e['text']} for e in cited]}}

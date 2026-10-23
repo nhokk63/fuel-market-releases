@@ -17,7 +17,7 @@ from bulletin import PROMPT as BULLETIN_PROMPT, evidence_pack, compile_report
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
-PROMPT_VERSION = '2026-10-24-evidence-blocks-2'
+PROMPT_VERSION = '2026-10-24-evidence-blocks-3'
 UTC = dt.timezone.utc
 VN = dt.timezone(dt.timedelta(hours=7))
 ROOTS = {

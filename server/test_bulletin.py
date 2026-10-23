@@ -18,6 +18,6 @@ class BulletinTests(unittest.TestCase):
         with self.assertRaises(ValueError):compile_report(self.raw,self.docs,evidence_pack(self.docs))
     def test_forecast_price_and_nonexistent_evidence_rejected(self):
         raw=copy.deepcopy(self.raw);raw['shortTerm']['base']='Nếu tăng lên 95.000 đồng/kg thì bán.'
-        with self.assertRaises(ValueError):compile_report(raw,self.docs,evidence_pack(self.docs))
+        out=compile_report(raw,self.docs,evidence_pack(self.docs));self.assertNotIn('95.000',out['report']['reason']);self.assertIn('chưa đủ căn cứ',out['report']['reason'])
         self.raw['facts'][0]['evidenceIds']=['99.1']
         with self.assertRaises(ValueError):compile_report(self.raw,self.docs,evidence_pack(self.docs))
