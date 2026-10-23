@@ -272,8 +272,8 @@ def run(path, selected=None):
             shared['attemptedAt'][family]=now.isoformat()
             # Persist attempted requests even when a provider times out.
             path.write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')))
-            body = {'model':'nvidia/nemotron-3-super-120b-a12b:free','models':['google/gemma-4-31b-it:free','nvidia/nemotron-3.5-lightning:free'],'max_tokens':10000,'temperature':0.2,'reasoning':{'enabled':False},
-                    'response_format':{'type':'json_object'},'messages':[
+            body = {'model':'nvidia/nemotron-3-ultra-550b-a55b:free','models':['nvidia/nemotron-3-super-120b-a12b:free','google/gemma-4-31b-it:free'],'max_tokens':10000,'temperature':0.2,'reasoning':{'effort':'low','exclude':True},
+                    'messages':[
                         {'role':'system','content':PROMPT},
                         {'role':'user','content':json.dumps({'family':family,'ids':IDS[family],'now':now.isoformat(),'verifiedQuotes':extracted,'documents':docs,'history':[q for q in shared['history'] if q.get('id') in IDS[family]][-150:]},ensure_ascii=False)}]}
             response = json.loads(get('https://openrouter.ai/api/v1/chat/completions',body,key))

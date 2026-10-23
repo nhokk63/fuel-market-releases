@@ -2,8 +2,8 @@
 
 `market.py` collects public pages, including same-site relevant news links,
 and sends the collected text to OpenRouter. It uses no paid search plugin.
-The primary free model is `nvidia/nemotron-3-super-120b-a12b:free`, with free-only
-fallback routes `google/gemma-4-31b-it:free` and `nvidia/nemotron-3.5-lightning:free`. It never falls
+The primary free model is `nvidia/nemotron-3-ultra-550b-a55b:free`, with free-only
+fallback routes `nvidia/nemotron-3-super-120b-a12b:free` and `google/gemma-4-31b-it:free`. It never falls
 back to a paid model. If free endpoints are unavailable, the previous report stays.
 
 Configure repository secret `OPENROUTER_API_KEY`, then run **Shared market
