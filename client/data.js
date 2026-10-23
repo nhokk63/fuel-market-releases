@@ -69,6 +69,8 @@ const SharedMarket=(()=>{
  function apply(feed){
   if(!valid(feed))throw Error('Bản tin chung chưa hợp lệ');
   const before=cached(),groups={...before?.groups};
+  const priorAgri={};if(typeof agriSeries==='function')for(const k of ['coffee','pepper','cau','rice'])try{priorAgri[k]=agriSeries(k,'daklak').at(-1);}catch{}
+  const priorFuel=loadData().history.at(-1)?.prices;
   for(const [id,g]of Object.entries(feed.groups))if(!groups[id]||Date.parse(g.generatedAt)>=Date.parse(groups[id].generatedAt))groups[id]=g;
   feed={...feed,groups};
   const rows=(feed.history||Object.values(groups).flatMap(g=>g.quotes)).filter(quote);
@@ -101,6 +103,9 @@ const SharedMarket=(()=>{
    }
   }
   if(typeof agri!=='undefined')agri=readStore('agri',agri);
+  if(typeof agriNotice==='function')for(const k of ['coffee','pepper','cau','rice'])try{agriNotice(k,priorAgri[k],agriSeries(k,'daklak').at(-1));}catch{}
+  try{const current=loadData();if(getPrefs().price&&priorFuel&&!samePrices(priorFuel,current.history.at(-1).prices))sendNotice('shared-fuel:'+current.sourceTime,'fuel','Giá xăng dầu vùng 2 thay đổi',PRODUCTS.filter(p=>priorFuel[p.id]!==current.history.at(-1).prices[p.id]).map(p=>p.label+' '+p.name+': '+current.history.at(-1).prices[p.id].toLocaleString('vi-VN')+' đ/lít').join(' · '));}catch{}
+
   if(document.getElementById('agrilist'))renderAgri();
   if(document.getElementById('aistatus'))repaintAnalysis();
  }
