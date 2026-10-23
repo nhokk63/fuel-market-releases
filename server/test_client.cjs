@@ -17,5 +17,6 @@ c.feed=feed;
  assert.throws(()=>vm.runInContext('SharedMarket.apply(bad)',c));assert.equal(JSON.stringify(vm.runInContext('SharedMarket.cached()',c)),previous);
  c.old=JSON.parse(JSON.stringify(feed));c.old.groups.coffee.generatedAt=new Date(+now-86400000).toISOString();c.old.groups.coffee.report.reason='obsolete';vm.runInContext('SharedMarket.apply(old)',c);assert.notEqual(vm.runInContext("SharedMarket.report('coffee').reason",c),'obsolete');
  for(const file of ['insights.js','agri.js','gold.js']){const s=fs.readFileSync(__dirname+'/../client/'+file,'utf8');new vm.Script(s);}
+ if(process.argv[2]){store.clear();c.live=JSON.parse(fs.readFileSync(process.argv[2],'utf8')).sharedMarket;vm.runInContext('SharedMarket.apply(live)',c);assert.equal(vm.runInContext("SharedMarket.report('coffee').generatedAt",c),c.live.groups.coffee.generatedAt);assert(vm.runInContext("SharedMarket.report('coffee').reason.includes('Triển vọng')",c));console.log('Live shared bulletin accepted and rendered as report data');}
  console.log('Shared client: coalescing, verified price, cached report, offline freshness, malformed feed, rollback protection passed');
 })().catch(e=>{console.error(e);process.exit(1)});

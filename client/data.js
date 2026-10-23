@@ -91,6 +91,15 @@ const SharedMarket=(()=>{
   const gold=feed.prices?.gold||groups.gold;
   if(typeof Gold!=='undefined'&&gold?.gold)Gold.applyShared(gold.gold,gold.generatedAt);
   writeStore('shared-market-v1',feed);writeStore('ai-error','');
+  if(typeof getPrefs==='function'&&typeof sendNotice==='function'){
+   const prefs=getPrefs();
+   for(const [id,g]of Object.entries(groups)){
+    if(before?.groups?.[id]?.generatedAt===g.generatedAt||g.report.direction==='unknown'||Date.parse(g.expiresAt)<=Date.now())continue;
+    if(!(id==='gold'?readStore('gold-notify',false):id==='fuel'?prefs.aiFuel:prefs.aiAgri))continue;
+    const label=id==='fuel'?'Xăng dầu':typeof AI_LABELS!=='undefined'?(AI_LABELS[id]||id):id;
+    sendNotice('shared-ai:'+id+':'+g.generatedAt,'ai','Xu hướng · '+label,g.report.reason.slice(0,240)+' · Tham khảo');
+   }
+  }
   if(typeof agri!=='undefined')agri=readStore('agri',agri);
   if(document.getElementById('agrilist'))renderAgri();
   if(document.getElementById('aistatus'))repaintAnalysis();

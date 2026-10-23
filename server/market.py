@@ -306,7 +306,7 @@ def run(path, selected=None):
                 (debug/(family+'-evidence.json')).write_text(json.dumps(evidence,ensure_ascii=False))
                 (debug/(family+'-docs.json')).write_text(json.dumps(docs,ensure_ascii=False))
             raw = re.sub(r'^```(?:json)?\s*|\s*```$', '', raw)
-            compiled=compile_report(json.loads(raw),docs,evidence)
+            compiled=compile_report(json.loads(raw),docs,evidence,extracted)
             result = validate(compiled,[{k:v for k,v in d.items() if k!='id'} for d in docs],family,now)
             if extracted: result['quotes']=extracted
             result['fingerprint'] = fingerprint

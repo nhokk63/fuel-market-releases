@@ -23,9 +23,23 @@ def numbers(s):
     return set(re.findall(r'\d+(?:[.,]\d+)*', s))
 
 
-def compile_report(raw, docs, evidence):
+def compile_report(raw, docs, evidence, verified_quotes=None):
     byid = {e['id']: e for e in evidence}
     used = {}; cited = []; sections = []; fact_count = 0; omitted = 0
+    quotes=verified_quotes or []
+    if quotes:
+        day=max(q['day'] for q in quotes)
+        lines=[]
+        for q in quotes:
+            if q['day']!=day:continue
+            doc=next((d for d in docs if d['url']==q['source']),None)
+            if not doc:continue
+            sid=doc['id'];used.setdefault(sid,len(used)+1)
+            price=f"{q['low']:,}".replace(',','.')
+            if q['high']!=q['low']:price+='–'+f"{q['high']:,}".replace(',','.')
+            lines.append(f"• {q['region']} · {q['grade']}: {price} {q['unit']} [{used[sid]}]")
+            cited.append({'sourceId':sid,'text':q['evidence']})
+        if lines:sections.append('Giá tham khảo · ngày '+day+'\n'+'\n'.join(lines));fact_count+=len(lines)
     for key, heading in [('facts', 'Giá và bối cảnh thị trường'), ('drivers', 'Phân tích động lực')]:
         rows = raw.get(key)
         if not isinstance(rows, list) or len(rows) > 8: raise ValueError('invalid bulletin sections')
@@ -49,13 +63,19 @@ def compile_report(raw, docs, evidence):
             paragraphs.append(text+' '+''.join(f'[{i}]' for i in dict.fromkeys(source_ids)))
         if paragraphs: sections.append(heading+'\n'+'\n\n'.join(paragraphs))
     def qualitative(text):
-        if not isinstance(text, str) or not 5 <= len(text) <= 1200 or re.search(r'\d|https?://', text): raise ValueError('invalid qualitative outlook')
+        if not isinstance(text, str) or not 5 <= len(text) <= 1200: raise ValueError('invalid qualitative outlook')
+        # Calendar references are not price targets or forecast probabilities.
+        without_dates=re.sub(r'\b(?:20\d{2}[/–-](?:20)?\d{2}|(?:0?[1-9]|[12]\d|3[01])/(?:0?[1-9]|1[0-2])(?:/20\d{2})?)\b','',text)
+        if re.search(r'\d|https?://',without_dates):raise ValueError('invalid qualitative outlook')
         return text
     for key, heading in [('shortTerm','Triển vọng 1–2 tuần'), ('mediumTerm','Triển vọng 1–2 tháng')]:
         value=raw.get(key,{})
         lines=[]
         for field,label in [('base','Cơ sở'),('up','Kịch bản tăng'),('down','Kịch bản giảm'),('invalidation','Điều kiện làm sai nhận định')]:
             text=qualitative(value.get(field))
+            if re.search(r'\d',text):
+                text='Nếu chưa có thêm dữ liệu kiểm chứng, chưa đủ căn cứ để đưa ra kịch bản này.'
+                omitted+=1
             if not text.startswith('Nếu'): raise ValueError('outlook must be conditional')
             lines.append(label+': '+text)
         sections.append(heading+'\n'+'\n\n'.join(lines))
