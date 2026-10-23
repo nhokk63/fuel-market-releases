@@ -26,3 +26,5 @@ must remain explicit. Model output is displayed as text, never executable HTML.
 
 The workflow only publishes `agri.json`. Signing keys are not used by Actions.
 Tests: `python3 -m unittest discover -s server -p 'test_*.py'`.
+
+The model now selects immutable evidence IDs for each factual paragraph. The compiler builds citations and bibliography, checks numeric tokens against selected evidence, and rejects numerical forecasts. This is a grounding check, not a proof of semantic entailment. Raw encrypted domestic gold payloads are only sent to the native parser, not interpreted as news. Publishing merges groups by timestamp onto a fresh main branch, preserving unrelated data. A prompt revision can retry a group once within the existing daily request budget.

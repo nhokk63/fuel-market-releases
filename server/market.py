@@ -13,10 +13,11 @@ import sys
 import unicodedata
 import urllib.request
 from html.parser import HTMLParser
+from bulletin import PROMPT as BULLETIN_PROMPT, evidence_pack, compile_report
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
-PROMPT_VERSION = '2026-10-23-source-ids-1'
+PROMPT_VERSION = '2026-10-24-evidence-blocks-2'
 UTC = dt.timezone.utc
 VN = dt.timezone(dt.timedelta(hours=7))
 ROOTS = {
@@ -80,7 +81,10 @@ def collect(family, with_news=True):
     docs = []
     def read(url):
         try:
-            p = Page(get(url))
+            html=get(url); p = Page(html)
+            if url not in ROOTS[family]:
+                published=re.search(r'<meta[^>]+(?:property|name)=["\'](?:article:published_time|pubdate|publishdate)["\'][^>]+content=["\'](20\d{2}-\d{2}-\d{2})',html,re.I)
+                if not published or not 0 <= (dt.datetime.now(VN).date()-dt.date.fromisoformat(published[1])).days <= 14:return None,[]
             return {'url': url, 'text': p.text[:18000]}, p.links
         except Exception: return None, []
     with futures.ThreadPoolExecutor(max_workers=4) as pool:
@@ -202,7 +206,9 @@ def collect_gold():
         try:
             raw = get(url); value = json.loads(raw)
             out[kind] = value
-            docs.append({'url':url,'text':raw[:18000]})
+            if kind=='world': docs.append({'url':url,'text':json.dumps({k:v for k,v in value.items() if k!='metals'},ensure_ascii=False)+'\n'+json.dumps([m for m in value.get('metals',[]) if m.get('symbol')=='XAU'],ensure_ascii=False)})
+            elif kind=='fx': docs.append({'url':url,'text':json.dumps({'base':value.get('base_code'),'date':value.get('time_last_update_utc'),'VND':value.get('rates',{}).get('VND')},ensure_ascii=False)})
+            elif isinstance(value.get('data'),(dict,list)): docs.append({'url':url,'text':raw[:18000]})
         except Exception: pass
     return out,docs
 
@@ -284,10 +290,10 @@ def run(path, selected=None):
             shared.setdefault('attemptVersions',{})[family]=PROMPT_VERSION
             # Persist attempted requests even when a provider times out.
             path.write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')))
-            body = {'model':'nvidia/nemotron-3-ultra-550b-a55b:free','models':['nvidia/nemotron-3-super-120b-a12b:free','google/gemma-4-31b-it:free'],'max_tokens':10000,'temperature':0.2,'reasoning':{'effort':'low','exclude':True},
-                    'messages':[
-                        {'role':'system','content':PROMPT+'\nKhông đưa bất cứ mốc giá tương lai, ngưỡng phần trăm hay số phiên kích hoạt nào. Phân tích kịch bản bằng điều kiện định tính. Không khẳng định mùa vụ Brazil hoặc Việt Nam nếu không có trích dẫn chứng minh chính xác. Ưu tiên chỉ dùng 2–3 tài liệu có dữ liệu rõ; bỏ các bài chỉ có tiêu đề. Với mỗi nguồn được dùng, chép một câu thật nguyên văn làm evidence trước rồi mới viết reason. Không viện dẫn nguồn khác trong reason.\nĐỊNH DẠNG NGUỒN CHO LƯỢT NÀY: Mỗi document có id số nguyên. Trong reason dùng [id] chính xác theo document, không đánh số lại. sources trả [] vì chương trình tự tạo danh mục. evidence phải là [{"sourceId":1,"quote":"đoạn nguyên văn thực tế"}]. Mỗi [id] trong bài phải có ít nhất một evidence tương ứng. Không tự viết URL trong phần report. Bỏ qua mẫu sources/evidence dùng URL ở trên; dùng định dạng sourceId này.'},
-                        {'role':'user','content':json.dumps({'family':family,'ids':IDS[family],'now':now.isoformat(),'verifiedQuotes':extracted,'documents':docs,'history':[q for q in shared['history'] if q.get('id') in IDS[family]][-150:]},ensure_ascii=False)}]}
+            evidence=evidence_pack(docs)
+            body = {'model':'nvidia/nemotron-3-ultra-550b-a55b:free','models':['nvidia/nemotron-3-super-120b-a12b:free','google/gemma-4-31b-it:free'],'max_tokens':6000,'temperature':0.1,'reasoning':{'effort':'low','exclude':True},
+                    'messages':[{'role':'system','content':BULLETIN_PROMPT},
+                        {'role':'user','content':json.dumps({'family':family,'now':now.isoformat(),'verifiedQuotes':extracted,'evidence':evidence},ensure_ascii=False)}]}
             response = json.loads(get('https://openrouter.ai/api/v1/chat/completions',body,key))
             if not response.get('choices'): raise ValueError('provider returned no completion: '+str(response.get('error',{}).get('code','unknown')))
             choice = response['choices'][0]
@@ -297,8 +303,11 @@ def run(path, selected=None):
             if os.environ.get('MARKET_DEBUG_DIR'):
                 debug=Path(os.environ['MARKET_DEBUG_DIR']);debug.mkdir(exist_ok=True,parents=True)
                 (debug/(family+'.json')).write_text(raw)
+                (debug/(family+'-evidence.json')).write_text(json.dumps(evidence,ensure_ascii=False))
+                (debug/(family+'-docs.json')).write_text(json.dumps(docs,ensure_ascii=False))
             raw = re.sub(r'^```(?:json)?\s*|\s*```$', '', raw)
-            result = validate(json.loads(raw),docs,family,now)
+            compiled=compile_report(json.loads(raw),docs,evidence)
+            result = validate(compiled,[{k:v for k,v in d.items() if k!='id'} for d in docs],family,now)
             if extracted: result['quotes']=extracted
             result['fingerprint'] = fingerprint
             result['model'] = response.get('model','openrouter/free')
