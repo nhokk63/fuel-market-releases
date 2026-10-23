@@ -7,7 +7,8 @@ fallback routes `google/gemma-4-31b-it:free` and `nvidia/nemotron-3.5-lightning:
 back to a paid model. If free endpoints are unavailable, the previous report stays.
 
 Configure repository secret `OPENROUTER_API_KEY`, then run **Shared market
-bulletin**. The scheduled job runs at minute 17 every four hours. GitHub can
+bulletin**. Prices are checked at minutes 7 and 37 each hour. Each AI group
+is attempted at most once every four hours. GitHub can
 delay schedules; the app must display the report timestamp and expiry.
 The persistent budget caps this pipeline at 42 attempted requests per Vietnam
 calendar day. Other apps using the same API key may consume the remaining quota.

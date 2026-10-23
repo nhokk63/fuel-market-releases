@@ -40,6 +40,10 @@ class EvidenceTests(unittest.TestCase):
         docs=[dict(url='https://baomoi.com/tien-ich-gia-xang-dau.epi',text='Giá xăng dầu Ngày 22-10-2026 15:30 Giá vùng 1 (VNĐ) Giá vùng 2 (VNĐ) Xăng E5 RON 92 25,060 25,560')]
         rows,at=extract_prices(docs,'fuel',self.today)
         self.assertEqual(rows[0]['low'],25560);self.assertEqual(at,'2026-10-22T15:30:00+07:00')
+    def test_diesel_sulphur_is_not_a_price(self):
+        docs=[dict(url='https://baomoi.com/tien-ich-gia-xang-dau.epi',text='Giá xăng dầu Ngày 22-10-2026 15:30 Giá vùng 1 (VNĐ) Giá vùng 2 (VNĐ) DO 0,001S Mức 5 30,650 31,260')]
+        rows,_=extract_prices(docs,'fuel',self.today)
+        self.assertEqual([(q['id'],q['low']) for q in rows],[('dov',31260)])
     def test_provider_failure_preserves_report_updates_prices(self):
         day=dt.datetime.now(dt.timezone(dt.timedelta(hours=7))).date()
         docs=[dict(url='https://giacaphe.com/gia-ca-phe-noi-dia/',text=f'Giá cà phê hôm nay ngày {day:%d/%m/%Y} Đắk Lắk 90,800 -600')]
