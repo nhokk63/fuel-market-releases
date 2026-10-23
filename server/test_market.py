@@ -24,6 +24,15 @@ class EvidenceTests(unittest.TestCase):
         raw = dict(quotes=[self.q,other],report=dict(direction='unknown',horizon='1–2 tuần',reason='Hai nguồn mâu thuẫn.',risk='Chưa xác minh.',sources=[dict(url=self.q['source'],title='Bảng giá')],evidence=[dict(source=self.q['source'],quote=self.q['evidence'])]))
         out = validate(raw,docs,'coffee',dt.datetime(2026,10,23,tzinfo=UTC))
         self.assertEqual(out['quotes'],[]); self.assertEqual(len(out['conflicts']),1)
+    def test_collector_source_ids_require_real_evidence(self):
+        docs=[dict(self.docs[0],id=1)]
+        raw=dict(quotes=[],report=dict(direction='unknown',reason='Giá tham khảo [1].',risk='Thiếu lịch sử.',sources=[],evidence=[dict(sourceId=1,quote=self.q['evidence'])]))
+        out=validate(copy.deepcopy(raw),docs,'coffee',dt.datetime(2026,10,23,tzinfo=UTC))
+        self.assertEqual(out['report']['sources'][0]['url'],self.q['source'])
+        raw['report']['reason']='Thông tin [2].'
+        with self.assertRaises(ValueError):validate(copy.deepcopy(raw),docs,'coffee',dt.datetime(2026,10,23,tzinfo=UTC))
+        raw['report']['reason']='Thông tin [1].';raw['report']['evidence'][0]['quote']='Giá bịa đặt không có trong tài liệu'
+        with self.assertRaises(ValueError):validate(raw,docs,'coffee',dt.datetime(2026,10,23,tzinfo=UTC))
     def test_css_numbers_and_scripts(self):
         p = Page('<style>.p:after{content:"90.800"}</style><script>91000</script><tr><td>Đắk Lắk</td><td><span class="p"></span></td></tr>')
         self.assertIn('90.800',p.text); self.assertNotIn('91000',p.text)
