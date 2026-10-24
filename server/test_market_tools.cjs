@@ -1,0 +1,12 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const source=fs.readFileSync((process.env.CLIENT_DIR||__dirname+'/../client/')+'insights.js','utf8');
+const store={},now=Date.parse('2026-10-24T10:00:00+07:00');let notices=0;
+const c=vm.createContext({console,Date,Intl,Number,readStore:(k,d)=>store[k]??d,writeStore:(k,v)=>store[k]=v,document:{getElementById:()=>null},watchCatalog:()=>[{id:'pepper',label:'Tiêu'}],fmt:n=>String(n),sendNotice:()=>notices++});
+vm.runInContext(source.slice(source.indexOf('function marketAmount('),source.indexOf('function openMarketTools(')),c);
+c.rule={id:'one',asset:'pepper',op:'above',target:150000,region:'Đắk Lắk',createdAt:now-60000};c.q={value:150000,high:150000,region:'Đắk Lắk',sourceAt:'2026-10-24',checkedAt:new Date(now).toISOString(),kind:'agri',unit:'đ/kg'};c.now=now;
+assert(vm.runInContext('targetHit(rule,q,now)',c));assert(!vm.runInContext('targetHit({...rule,firedAt:now},q,now)',c));assert(!vm.runInContext("targetHit(rule,{...q,sourceAt:'2026-10-23'},now)",c));assert(!vm.runInContext("targetHit(rule,{...q,region:'Gia Lai'},now)",c));assert(!vm.runInContext('targetHit(rule,{...q,high:155000},now)',c));assert(!vm.runInContext('targetHit(rule,{...q,checkedAt:new Date(now-180000).toISOString()},now)',c));assert(vm.runInContext("targetHit({...rule,op:'below'},q,now)",c));assert(!vm.runInContext('targetHit(rule,{...q,value:149999},now)',c));
+assert.equal(vm.runInContext("marketAmount('2,5')",c),2.5);assert.equal(vm.runInContext("marketAmount('-1')",c),null);assert.equal(vm.runInContext("marketAmount('1e9')",c),null);
+c.item={quantity:2000,region:'Đắk Lắk'};c.q.delta=-600;assert.equal(vm.runInContext('holdingValue(item,q).low',c),300000000);assert.equal(vm.runInContext('holdingValue(item,q).delta',c),-1200000);assert.equal(vm.runInContext("holdingValue({...item,region:'Khác'},q)",c),null);
+// Replay the same fresh quote across two foreground checks: emit once.
+c.watchQuote=()=>c.q;c.q.sourceAt=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());c.q.checkedAt=new Date().toISOString();store['price-targets']=[{...c.rule,createdAt:Date.now()-1000}];vm.runInContext('checkPriceTargets();checkPriceTargets()',c);assert.equal(notices,1);assert(store['price-targets'][0].firedAt);
+console.log('PASS: threshold edges, stale/future scope safeguards, range rejection, one-shot notifications, fractional quantities and valuation');

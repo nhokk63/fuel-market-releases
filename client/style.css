@@ -89,3 +89,11 @@ nav .marketicon{width:23px;height:23px}
 #detail #detailmeta{grid-column:1/-1;grid-row:2;font-size:9px;line-height:1.4}
 .detailtabs button{flex:1}.detailsourceinfo{flex-shrink:0;font-size:10px;color:var(--muted);max-height:26%;overflow:auto;border-top:1px solid #253139;padding-top:4px}
 .detailsourceinfo summary{color:var(--green);padding:5px 0;cursor:pointer}.detailsourceinfo p{margin:5px 0}.detailsourceinfo .hint{font-size:10px;line-height:1.4}
+
+.watchtools{display:flex;gap:5px;flex-shrink:0}.watchtools button{flex:1;min-width:0;padding:7px 3px;font-size:10px;background:#141e24;border:1px solid #2b3942;border-radius:6px;color:var(--ink)}
+#watchlist.fullquotes .watchcard{padding:13px;row-gap:5px}#watchlist.fullquotes .watchfresh{white-space:pre-line;font-size:10px!important}#watchlist.fullquotes .watchvalue{font-size:27px}
+@keyframes priceflash{0%{background:#1e493b}100%{background:#121a20}}.watchcard.pricechanged .watchvalue{animation:priceflash 1s ease-out}
+@media(prefers-reduced-motion:reduce){.watchcard.pricechanged .watchvalue{animation:none}}
+#detailpin{padding:6px;font-size:10px}.markettoolsdialog .reportbody{white-space:normal}.marketform{display:flex;flex-direction:column;gap:8px;margin:12px 0 18px}.marketform input,.marketform select{width:100%;min-width:0;padding:12px;background:#141e24;color:var(--ink);border:1px solid #35434e;border-radius:8px;font-size:14px}.marketform .red{font-size:12px;margin:0}.toolcard{padding:12px;margin-bottom:8px;background:#141e24;border:1px solid #2b3942;border-radius:8px;font-size:13px}.toolcard p{font-size:12px;white-space:pre-line;line-height:1.6}.holdingtotal{font-size:15px;color:var(--green);font-weight:600}
+
+.pill:not(.flat):not(.down){background:#13372d;color:#43d5a6}.pill.down{background:#381b23;color:#ff8090}

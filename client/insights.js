@@ -139,7 +139,7 @@ async function legacySyncAi(){
  finally{job.leaseUntil=0;writeStore(jobKey,job);if(lease)MarketAPI.finishAnalysis(lease,success);aiBusy=false;aiProgress='';repaintAnalysis();}
 }
 function directionLabel(d){return {up:'↗ Có thể tăng',down:'↘ Có thể giảm',flat:'→ Có thể đi ngang',unknown:'Chưa đủ cơ sở'}[d];}
-function renderAi(){const r=readStore('ai-results',null),x=SharedMarket.report($('aipicker').value)||r?.items?.find(x=>x.id===$('aipicker').value&&x.scope===analysisScope(analysisAsset($('aipicker').value))),expired=x&&Date.parse(x.expiresAt||r.expiresAt)<=Date.now();$('aistatus').textContent=aiBusy?aiProgress:readStore('ai-error','')||(x?(expired?'Dự báo đã hết hiệu lực · ':'Cập nhật ')+new Date(x?.generatedAt||r.generatedAt).toLocaleString('vi-VN'):'Chưa có bản tin chung cho mặt hàng này · đang chờ nguồn và phân tích hợp lệ');$('aidirection').textContent=x?directionLabel(x.direction):'Chưa có dự báo';$('aidirection').style.color=!x||expired?'var(--muted)':x.direction==='up'?(Object.hasOwn(AGRI_LABELS,x.id)?'var(--green)':'var(--red)'):x.direction==='down'?(Object.hasOwn(AGRI_LABELS,x.id)?'var(--red)':'var(--green)'):'var(--muted)';$('aihorizon').textContent=x?x.horizon+(expired?' · Hết hiệu lực':''):'';$('airisk').textContent=x?'Rủi ro: '+x.risk:'';$('aisources').replaceChildren();if(x?.sources?.length){const pick=document.createElement('select');pick.setAttribute('aria-label','Nguồn dự báo');for(const source of x.sources){const o=document.createElement('option');o.value=source.url;o.textContent='['+(x.sources.indexOf(source)+1)+'] '+(source.title||new URL(source.url).hostname);pick.append(o);}const open=document.createElement('button');open.className='quiet';open.textContent='Đọc nguồn ↗';open.onclick=()=>window.Updater&&Updater.openSource(pick.value);$('aisources').append(pick,open);} $('airefresh').disabled=aiBusy;if(document.getElementById('aitextpager'))requestAnimationFrame(()=>renderAiPages(x));}
+function renderAi(){const r=readStore('ai-results',null),x=SharedMarket.report($('aipicker').value)||r?.items?.find(x=>x.id===$('aipicker').value&&x.scope===analysisScope(analysisAsset($('aipicker').value))),expired=x&&Date.parse(x.expiresAt||r.expiresAt)<=Date.now();$('aistatus').textContent=aiBusy?aiProgress:readStore('ai-error','')||(x?(expired?'Dự báo đã hết hiệu lực · ':'Cập nhật ')+new Date(x?.generatedAt||r.generatedAt).toLocaleString('vi-VN'):'Chưa có bản tin chung cho mặt hàng này · đang chờ nguồn và phân tích hợp lệ');$('aidirection').textContent=x?directionLabel(x.direction):'Chưa có dự báo';$('aidirection').style.color=!x||expired?'var(--muted)':x.direction==='up'?'var(--green)':x.direction==='down'?'var(--red)':'var(--muted)';$('aihorizon').textContent=x?x.horizon+(expired?' · Hết hiệu lực':''):'';$('airisk').textContent=x?'Rủi ro: '+x.risk:'';$('aisources').replaceChildren();if(x?.sources?.length){const pick=document.createElement('select');pick.setAttribute('aria-label','Nguồn dự báo');for(const source of x.sources){const o=document.createElement('option');o.value=source.url;o.textContent='['+(x.sources.indexOf(source)+1)+'] '+(source.title||new URL(source.url).hostname);pick.append(o);}const open=document.createElement('button');open.className='quiet';open.textContent='Đọc nguồn ↗';open.onclick=()=>window.Updater&&Updater.openSource(pick.value);$('aisources').append(pick,open);} $('airefresh').disabled=aiBusy;if(document.getElementById('aitextpager'))requestAnimationFrame(()=>renderAiPages(x));}
 function aiState(){try{return window.MarketAPI?JSON.parse(MarketAPI.state()):{};}catch{return {};}}
 function aiProvider(){return 'openrouter';}
 function aiIdentity(){const s=aiState();return aiProvider()+':'+(s.model||'openrouter/free');}
@@ -167,10 +167,10 @@ function openDetail(id,tab='chart'){
  if(ag){agriSelected=id;renderAgri();}else{selected=PRODUCTS.findIndex(p=>p.id===id);render();}
  $('aipicker').value=id;go('detail');document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.go===(ag?'agriculture':'market')));renderDetail();showDetailTab(tab);
 }
-function renderDetail(){const ag=Object.hasOwn(AGRI_LABELS,detailId);$('detailname').textContent=ag?AGRI_LABELS[detailId]:PRODUCTS[selected].label;
+function renderDetail(){const ag=Object.hasOwn(AGRI_LABELS,detailId);$('detailname').textContent=ag?AGRI_LABELS[detailId]:PRODUCTS[selected].label;updateDetailPin();
  const ricePicker=$('riceseries');ricePicker.hidden=detailId!=='rice';if(detailId==='rice'){riceSeries();ricePicker.replaceChildren();for(const key of riceKeys()){const o=document.createElement('option');o.value=key;const parts=JSON.parse(key);o.textContent=parts[1]+' · '+parts[0];ricePicker.append(o);}ricePicker.value=riceSelected;ricePicker.onchange=()=>{riceSelected=ricePicker.value;agriPicked=-1;renderDetail();if(detailTab==='chart')drawAgriChart();if(detailTab==='analysis')renderAi();};}
  const series=ag?agriSeries(detailId):assetHistory(detailId),last=series.at(-1),prev=series.at(-2);const diff=ag?agriDelta(series):prev?last.prices[detailId]-prev.prices[detailId]:null;
- $('detailprice').textContent=ag?moneyRange(last):last?fmt(last.prices[detailId]):'—';$('detaildelta').textContent=diff===null?'Chưa có mốc so sánh':(diff>0?'↗ +':diff<0?'↘ ':'→ ')+fmt(diff)+' đ · so mốc trước';$('detaildelta').style.color=diff===null||diff===0?'var(--muted)':(ag?diff>0:diff<0)?'var(--green)':'var(--red)';
+ $('detailprice').textContent=ag?moneyRange(last):last?fmt(last.prices[detailId]):'—';$('detaildelta').textContent=diff===null?'Chưa có mốc so sánh':(diff>0?'↗ +':diff<0?'↘ ':'→ ')+fmt(diff)+' đ · so mốc trước';$('detaildelta').style.color=diff===null||diff===0?'var(--muted)':diff>0?'var(--green)':'var(--red)';
  $('detailmeta').textContent=(detailId==='rice'?(last?.region||'Chưa có vùng'):(ag?(agriRegion==='all'?'Các vùng khảo sát':'Đắk Lắk'):'Vùng 2'))+' · đ/'+(ag?'kg':'lít');
  $('detailmeta').textContent+='\n'+freshnessText(last?(ag?last.day:last.time):null,readStore('price-checks',{})[ag?detailId:'fuel'],ag?'agri':'fuel');
  $('detailtrend').textContent=diff===null?'Chưa đủ lịch sử':diff>0?'Đang tăng':diff<0?'Đang giảm':'Đang giữ giá';$('detailtrend').style.color=$('detaildelta').style.color;
@@ -324,24 +324,25 @@ function watchSpark(values){
 }
 function renderWatchlist(){
  const holder=$('watchrows');if(!holder)return;
- const catalog=watchCatalog(),pins=watchPins(),signature=JSON.stringify(pins.map(id=>[id,watchQuote(id)]));if(holder.dataset.snapshot===signature)return;holder.dataset.snapshot=signature;holder.replaceChildren();
- for(const id of pins){const q=watchQuote(id),card=document.createElement('button');card.className='watchcard';card.onclick=()=>{if(id==='gold'){go('gold');Gold.open('world');}else{agriRegion='daklak';openDetail(id);}};
+ const catalog=watchCatalog(),pins=watchPins(),signature=JSON.stringify(pins.map(id=>[id,watchQuote(id)]));if(holder.dataset.snapshot===signature)return;holder.dataset.snapshot=signature;const scroll=holder.scrollTop,oldCards=new Map([...holder.querySelectorAll('[data-asset]')].map(c=>[c.dataset.asset,c]));
+ for(const id of pins){const q=watchQuote(id),fingerprint=JSON.stringify(q),old=oldCards.get(id);oldCards.delete(id);if(old?.dataset.quote===fingerprint){holder.append(old);continue;}const card=document.createElement('button');card.className='watchcard';card.dataset.asset=id;card.dataset.quote=fingerprint;card.dataset.price=String(q.value);if(old&&old.dataset.price!==String(q.value))card.classList.add('pricechanged');if(old)old.remove();card.onclick=()=>{if(id==='gold'){go('gold');Gold.open('world');}else{agriRegion='daklak';openDetail(id);}};
  const head=document.createElement('div');head.className='watchhead';const title=document.createElement('b');title.textContent=catalog.find(x=>x.id===id).label;title.prepend(marketIcon(id));const delta=document.createElement('span');delta.className=q.delta>0?'green':q.delta<0?'red':'muted';delta.textContent=q.delta==null?'Chưa có mốc trước':(q.delta>0?'↗ +':q.delta<0?'↘ ':'→ ')+fmt(q.delta)+' đ';head.append(title,delta);
  const quote=document.createElement('div');quote.className='watchvalue';quote.textContent=Number.isFinite(q.value)?fmt(q.value)+(q.high>q.value?'–'+fmt(q.high):''):'—';const unit=document.createElement('small');unit.textContent=q.unit+' · '+q.region;
  const fresh=document.createElement('small');fresh.className='watchfresh';fresh.textContent=freshnessText(q.sourceAt,q.checkedAt,q.kind).replace('\n',' · ');if(fresh.textContent.includes('Giá cũ'))fresh.classList.add('stale');
  card.append(head,quote,unit);const spark=watchSpark(q.series);if(spark)card.append(spark);card.append(fresh);holder.append(card);
  }
- if(!pins.length){const empty=document.createElement('p');empty.textContent='Chưa ghim mặt hàng. Bấm Chỉnh ghim để chọn.';holder.append(empty);}
+ for(const old of oldCards.values())old.remove();holder.querySelectorAll('.watchempty').forEach(e=>e.remove());holder.scrollTop=scroll;
+ if(!pins.length){const empty=document.createElement('p');empty.className='watchempty';empty.textContent='Chưa ghim mặt hàng. Bấm Chỉnh ghim để chọn.';holder.append(empty);}
 }
 function editWatchPins(){
- const dialog=document.createElement('dialog');dialog.className='reportdialog';const bar=document.createElement('div');bar.className='reportbar';const title=document.createElement('b');title.textContent='Mặt hàng của tao';const done=document.createElement('button');done.textContent='Xong';done.onclick=()=>dialog.close();bar.append(title,done);dialog.append(bar);const body=document.createElement('div');body.className='reportbody';
+ const dialog=document.createElement('dialog');dialog.className='reportdialog';const bar=document.createElement('div');bar.className='reportbar';const title=document.createElement('b');title.textContent='Mặt hàng theo dõi';const done=document.createElement('button');done.textContent='Xong';done.onclick=()=>dialog.close();bar.append(title,done);dialog.append(bar);const body=document.createElement('div');body.className='reportbody';
  for(const x of watchCatalog()){const label=document.createElement('label');label.className='setting';const name=document.createElement('span');name.textContent=x.label;const input=document.createElement('input');input.type='checkbox';input.checked=watchPins().includes(x.id);input.onchange=()=>{const pins=watchPins();writeStore('watch-pins',input.checked?[...pins,x.id]:pins.filter(id=>id!==x.id));renderWatchlist();};label.append(name,input);body.append(label);}dialog.append(body);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove());dialog.showModal();
 }
 function mountWatchlist(){
- const section=document.createElement('section');section.id='watchlist';section.className='page';section.hidden=true;section.innerHTML='<div class="titlebar"><h1>Của tao</h1><button id="editwatch" class="quiet">Chỉnh ghim ☆</button></div><div class="hint">Giá tham khảo · Chạm mặt hàng để xem chi tiết</div><div id="watchrows"></div>';
- document.querySelector('main').append(section);$('editwatch').onclick=editWatchPins;
- const nav=document.createElement('button');nav.dataset.go='watchlist';nav.innerHTML='<span>☆</span>Của tao';nav.onclick=()=>go('watchlist');document.querySelector('nav').prepend(nav);
- setInterval(()=>{if(!document.hidden&&page==='watchlist')renderWatchlist();},2000);go('watchlist');
+ const section=document.createElement('section');section.id='watchlist';section.className='page';section.hidden=true;section.innerHTML='<div class="titlebar"><h1>Theo dõi</h1><button id="editwatch" class="quiet">Chỉnh ghim ☆</button></div><div class="hint">Giá tham khảo · Chạm mặt hàng để xem chi tiết</div><div class="watchtools"><button id="watchdensity">Gọn</button><button id="watchalerts">Cảnh báo giá</button><button id="watchholdings">Hàng đang giữ</button></div><div id="watchrows"></div>';
+ document.querySelector('main').append(section);$('editwatch').onclick=editWatchPins;$('watchalerts').onclick=()=>openMarketTools('alerts');$('watchholdings').onclick=()=>openMarketTools('holdings');$('watchdensity').onclick=()=>{writeStore('watch-density',readStore('watch-density','compact')==='compact'?'full':'compact');applyWatchDensity();};applyWatchDensity();
+ const nav=document.createElement('button');nav.dataset.go='watchlist';nav.innerHTML='<span>☆</span>Theo dõi';nav.onclick=()=>go('watchlist');document.querySelector('nav').prepend(nav);
+ setInterval(()=>{if(!document.hidden){checkPriceTargets();if(page==='watchlist')renderWatchlist();const tool=document.querySelector('.markettoolsdialog[open]');if(tool?.dataset.mode==='holdings')renderMarketToolList('holdings');}},2000);go('watchlist');
 }
 
 // Local SVGs use currentColor: no emoji/font substitutions or remote assets.
@@ -363,4 +364,63 @@ function marketIcon(kind){
 function installMarketIcons(){
  for(const button of document.querySelectorAll('nav button[data-go]')){const old=button.querySelector('span');if(old)old.replaceWith(marketIcon(button.dataset.go));}
  const edit=$('editwatch');if(edit){edit.textContent='Chỉnh ghim';edit.prepend(marketIcon('watchlist'));}
+}
+
+function applyWatchDensity(){const full=readStore('watch-density','compact')==='full';$('watchlist').classList.toggle('fullquotes',full);$('watchdensity').textContent=full?'Đầy đủ ▾':'Gọn ▾';$('watchdensity').setAttribute('aria-label','Đổi mật độ hiển thị: '+(full?'đầy đủ':'gọn'));}
+function updateDetailPin(){
+ if(!document.getElementById('detailname')||!watchCatalog().some(x=>x.id===detailId))return;
+ let button=$('detailpin');if(!button){button=document.createElement('button');button.id='detailpin';button.className='quiet';$('detailname').after(button);}
+ const pinned=watchPins().includes(detailId);button.textContent=pinned?'Đã ghim':'Ghim';button.setAttribute('aria-pressed',String(pinned));button.onclick=()=>{const pins=watchPins();writeStore('watch-pins',pins.includes(detailId)?pins.filter(id=>id!==detailId):[...pins,detailId]);updateDetailPin();};
+}
+function marketAmount(text){const raw=String(text).trim();if(!/^\d+(?:[.,]\d{1,3})?$/.test(raw))return null;const n=Number(raw.replace(',','.'));return Number.isFinite(n)&&n>0&&n<=1e9?n:null;}
+function targetHit(rule,q,now=Date.now()){
+ if(rule.firedAt||!Number.isFinite(rule.target)||rule.target<=0||!Number.isFinite(q?.value)||q.value<=0||(q.high&&q.high!==q.value)||q.region!==rule.region)return false;
+ const checked=Date.parse(q.checkedAt),source=Date.parse(q.sourceAt);if(!Number.isFinite(checked)||!Number.isFinite(source)||checked<rule.createdAt||checked>now+300000||now-checked>120000||source>now+300000)return false;
+ const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(now));
+ if(q.kind==='agri'&&q.sourceAt.slice(0,10)!==today)return false;
+ if(q.kind==='gold'&&now-source>3600000)return false;
+ if(q.kind==='fuel'&&now-source>8*86400000)return false;
+ return rule.op==='above'?q.value>=rule.target:rule.op==='below'?q.value<=rule.target:false;
+}
+function checkPriceTargets(){
+ const rules=readStore('price-targets',[]);let changed=false;
+ for(const rule of rules){let q;try{q=watchQuote(rule.asset);}catch{continue;}if(!targetHit(rule,q))continue;
+ // Persist first so UI refresh and duplicate price checks cannot emit twice.
+ rule.firedAt=Date.now();rule.hitPrice=q.value;changed=true;writeStore('price-targets',rules);
+ const label=watchCatalog().find(x=>x.id===rule.asset)?.label||rule.asset;
+ sendNotice('target:'+rule.id,'price','Đạt giá mục tiêu · '+label,fmt(q.value)+' '+q.unit+' · '+q.region+' · Ngày giá '+q.sourceAt);
+ }
+ if(changed&&document.getElementById('markettool-list'))renderMarketToolList('alerts');
+}
+function holdingValue(item,q){
+ if(!Number.isFinite(item.quantity)||item.quantity<=0||!Number.isFinite(q?.value)||q.region!==item.region)return null;
+ const low=item.quantity*q.value,high=item.quantity*(q.high||q.value);return Number.isFinite(low)&&Number.isFinite(high)?{low,high,delta:Number.isFinite(q.delta)?item.quantity*q.delta:null}:null;
+}
+function openMarketTools(mode){
+ const dialog=document.createElement('dialog');dialog.className='reportdialog markettoolsdialog';dialog.dataset.mode=mode;
+ const bar=document.createElement('div');bar.className='reportbar';const title=document.createElement('b');title.textContent=mode==='alerts'?'Cảnh báo giá mục tiêu':'Hàng đang giữ';const close=document.createElement('button');close.textContent='Đóng ×';close.onclick=()=>dialog.close();bar.append(title,close);
+ const body=document.createElement('div');body.className='reportbody';const note=document.createElement('p');note.className='hint';note.textContent=mode==='alerts'?'Kiểm tra khi app đang mở, sau khi tải được giá nguồn mới. Mỗi cảnh báo báo một lần; chưa hỗ trợ cảnh báo mục tiêu khi đóng app. Cũng lưu vào Nhật ký thông báo.':'Giá trị tham khảo theo giá nguồn, không phải cam kết thu mua. Vàng dùng giá bán quốc tế quy đổi; không phải giá bán lại tại cửa hàng. Lưu trên máy này.';
+ const form=document.createElement('form');form.className='marketform';const asset=document.createElement('select');asset.setAttribute('aria-label','Mặt hàng');for(const x of watchCatalog()){const o=document.createElement('option');o.value=x.id;o.textContent=x.label;asset.append(o);}
+ const op=document.createElement('select');op.setAttribute('aria-label','Điều kiện giá');op.innerHTML='<option value="above">Giá từ mức này trở lên ≥</option><option value="below">Giá từ mức này trở xuống ≤</option>';
+ const input=document.createElement('input');input.inputMode=mode==='alerts'?'numeric':'decimal';input.required=true;input.setAttribute('aria-label',mode==='alerts'?'Giá mục tiêu, đồng':'Số lượng hàng');input.placeholder=mode==='alerts'?'Ví dụ 150000 (không dấu ngăn cách)':'Số lượng, ví dụ 2000 hoặc 2,5';
+ const unit=document.createElement('small');unit.className='hint';const update=()=>{const q=watchQuote(asset.value);unit.textContent=(mode==='alerts'?'Giá mục tiêu: '+q.unit:'Số lượng: '+(q.kind==='gold'?'lượng':q.kind==='fuel'?'lít':'kg'))+' · '+q.region;};asset.onchange=update;
+ const submit=document.createElement('button');submit.type='submit';submit.className='primary';submit.textContent=mode==='alerts'?'Thêm cảnh báo':'Lưu số lượng';const error=document.createElement('p');error.className='red';error.setAttribute('role','status');
+ form.append(asset);if(mode==='alerts')form.append(op);form.append(input,unit,submit,error);const list=document.createElement('div');list.id='markettool-list';
+ form.onsubmit=e=>{e.preventDefault();const n=marketAmount(input.value);if(n===null||mode==='alerts'&&!/^\d+$/.test(input.value.trim())){error.textContent=mode==='alerts'?'Nhập giá nguyên bằng đồng, không dấu chấm/phẩy.':'Nhập số lượng lớn hơn 0; dùng dấu phẩy hoặc chấm cho phần thập phân.';return;}
+ const q=watchQuote(asset.value);if(mode==='alerts'&&q.high&&q.high!==q.value){error.textContent='Nguồn đang báo khoảng giá. Chờ báo giá đơn nhất để đặt mục tiêu chính xác.';return;}if(!Number.isFinite(q.value)){error.textContent='Chưa có giá và quy cách hàng để lưu. Thử lại sau khi có dữ liệu.';return;}const key=mode==='alerts'?'price-targets':'market-holdings',items=readStore(key,[]);if(items.length>=50&&(mode==='alerts'||!items.some(r=>r.asset===asset.value&&r.region===q.region))){error.textContent='Tối đa 50 mục. Xóa mục không dùng trước khi thêm.';return;}
+ const item={id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8),asset:asset.value,region:q.region,createdAt:Date.now()};
+ if(mode==='alerts'){Object.assign(item,{op:op.value,target:n,firedAt:0});if(items.some(r=>!r.firedAt&&r.asset===item.asset&&r.region===item.region&&r.op===item.op&&r.target===n)){error.textContent='Cảnh báo này đã tồn tại.';return;}items.push(item);}else{item.quantity=n;const i=items.findIndex(r=>r.asset===item.asset&&r.region===item.region);if(i>=0)items[i]={...items[i],quantity:n};else items.push(item);}
+ writeStore(key,items);input.value='';error.textContent='';if(mode==='alerts'&&window.Native&&!Native.canNotify())Native.requestPermission();renderMarketToolList(mode);
+ };
+ body.append(note,form,list);dialog.append(bar,body);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove());update();renderMarketToolList(mode);dialog.showModal();
+}
+function renderMarketToolList(mode){
+ const list=$('markettool-list');if(!list||list.closest('dialog')?.dataset.mode!==mode)return;list.replaceChildren();const key=mode==='alerts'?'price-targets':'market-holdings',items=readStore(key,[]);let total=0,valued=0;
+ for(const item of items){const card=document.createElement('div');card.className='toolcard';const title=document.createElement('b');title.textContent=watchCatalog().find(x=>x.id===item.asset)?.label||item.asset;const text=document.createElement('p'),q=watchQuote(item.asset);
+ if(mode==='alerts')text.textContent=(item.op==='above'?'≥ ':'≤ ')+fmt(item.target)+' '+q.unit+' · '+item.region+'\n'+(item.firedAt?'Đã báo '+new Date(item.firedAt).toLocaleString('vi-VN')+' · Giá '+fmt(item.hitPrice):'Đang chờ giá nguồn mới đạt mục tiêu');
+ else{const v=holdingValue(item,q);if(v){total+=v.low;valued++;}text.textContent=fmt(item.quantity)+' '+(q.kind==='gold'?'lượng':q.kind==='fuel'?'lít':'kg')+' · '+item.region+'\n'+(v?fmt(Math.round(v.low))+(v.high>v.low?'–'+fmt(Math.round(v.high)):'')+' đ tham khảo'+(v.delta!==null?'\n'+(v.delta>0?'+':'')+fmt(Math.round(v.delta))+' đ so mốc giá trước':''):'Chưa có giá cùng loại hàng để tính')+'\n'+freshnessText(q.sourceAt,q.checkedAt,q.kind);}
+ const remove=document.createElement('button');remove.className='quiet';remove.textContent='Xóa';remove.onclick=()=>{if(!confirm('Xóa '+(mode==='alerts'?'cảnh báo':'số lượng đã lưu')+' này?'))return;writeStore(key,readStore(key,[]).filter(r=>r.id!==item.id));renderMarketToolList(mode);};card.append(title,text,remove);list.append(card);
+ }
+ if(mode==='holdings'&&items.length){const sum=document.createElement('p');sum.className='holdingtotal';sum.textContent='Tổng tham khảo từ '+fmt(Math.round(total))+' đ · Định giá được '+valued+'/'+items.length+' mục (có thể dùng giá cũ)';list.prepend(sum);}
+ if(!items.length)list.textContent=mode==='alerts'?'Chưa có cảnh báo giá mục tiêu.':'Chưa nhập hàng đang giữ.';
 }
