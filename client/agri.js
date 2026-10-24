@@ -44,7 +44,7 @@ function parseCau(html,now=Date.now(),kind="cau"){
  if(!quotes.length)throw Error('Bảng cau chưa có báo giá hợp lệ');return quotes;
 }
 const agriCalls=new Map();window.fmReply=r=>{const c=agriCalls.get(r.id);if(!c)return;clearTimeout(c.timer);agriCalls.delete(r.id);r.error?c.reject(Error(r.error)):c.resolve(r.data);};
-function bridgeCall(method,args=[],timeout=60000){return new Promise((resolve,reject)=>{if(!window.Updater)return reject(Error('Cần APK 1.1.0 để kết nối'));const id=Date.now()+'-'+Math.random(),timer=setTimeout(()=>{agriCalls.delete(id);reject(Error('Nguồn phản hồi quá lâu'));},timeout);agriCalls.set(id,{resolve,reject,timer});Updater[method](...args,id);});}
+function bridgeCall(method,args=[],timeout=60000){return new Promise((resolve,reject)=>{if(!window.Updater)return reject(Error('Cần APK 1.1.0 để kết nối'));const id=Date.now()+'-'+Math.random(),timer=setTimeout(()=>{agriCalls.delete(id);reject(Error('Nguồn phản hồi quá lâu'));},timeout);agriCalls.set(id,{resolve,reject,timer});try{Updater[method](...args,id);}catch(e){clearTimeout(timer);agriCalls.delete(id);reject(e);}});}
 function vnDay(ms=Date.now()){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(ms));}
 function parseAgri(html,kind,now=Date.now()){
  const doc=new DOMParser().parseFromString(html,'text/html');const title=doc.querySelector('h1')?.textContent||'';const d=title.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(!d)throw Error('Nguồn chưa có ngày giá');const day=`${d[3]}-${d[2].padStart(2,'0')}-${d[1].padStart(2,'0')}`;if(!validTime(day+'T00:00:00+07:00',now))throw Error('Ngày giá không hợp lệ');

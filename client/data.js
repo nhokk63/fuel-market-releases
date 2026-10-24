@@ -113,7 +113,7 @@ const SharedMarket=(()=>{
   if(pending)return pending;
   if(!force&&Date.now()-lastAttempt<60000){if(cached())return cached();throw Error('Đang chờ thử tải lại bản tin chung');}
   lastAttempt=Date.now();
-  pending=(async()=>{try{const state=JSON.parse(Updater.state()),url=new URL('agri.json',state.url).href;const raw=await bridgeCall('fetch',[url],45000),feed=JSON.parse(raw).sharedMarket;apply(feed);return feed;}catch(e){writeStore('ai-error','Chưa tải được bản tin chung · giữ báo cáo đã lưu. '+e.message);if(cached())return cached();throw e;}finally{pending=null;}})();return pending;
+  pending=Promise.resolve().then(async()=>{try{if(document.readyState==='loading')await new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true}));const state=JSON.parse(Updater.state()),url=new URL('agri.json',state.url).href;const raw=await bridgeCall('fetch',[url],45000),feed=JSON.parse(raw).sharedMarket;apply(feed);return feed;}catch(e){writeStore('ai-error','Chưa tải được bản tin chung · giữ báo cáo đã lưu. '+e.message);if(cached())return cached();throw e;}}).finally(()=>{pending=null;});return pending;
  }
  return {sync,apply,report,cached,valid};
 })();

@@ -22,7 +22,9 @@ jobs:
       - name: Test evidence validation
         run: python3 -m unittest discover -s server -p 'test_*.py'
       - name: Test shared client
-        run: node server/test_client.cjs
+        run: |
+          node server/test_client.cjs
+          node server/test_startup.cjs
       - name: Collect and analyse
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
