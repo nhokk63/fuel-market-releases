@@ -325,7 +325,7 @@ function renderWatchlist(){
  const holder=$('watchrows');if(!holder)return;
  const catalog=watchCatalog(),pins=watchPins(),signature=JSON.stringify(pins.map(id=>[id,watchQuote(id)]));if(holder.dataset.snapshot===signature)return;holder.dataset.snapshot=signature;holder.replaceChildren();
  for(const id of pins){const q=watchQuote(id),card=document.createElement('button');card.className='watchcard';card.onclick=()=>{if(id==='gold'){go('gold');Gold.open('world');}else{agriRegion='daklak';openDetail(id);}};
- const head=document.createElement('div');head.className='watchhead';const title=document.createElement('b');title.textContent=catalog.find(x=>x.id===id).label;const delta=document.createElement('span');delta.className=q.delta>0?'green':q.delta<0?'red':'muted';delta.textContent=q.delta==null?'Chưa có mốc trước':(q.delta>0?'↗ +':q.delta<0?'↘ ':'→ ')+fmt(q.delta)+' đ';head.append(title,delta);
+ const head=document.createElement('div');head.className='watchhead';const title=document.createElement('b');title.textContent=catalog.find(x=>x.id===id).label;title.prepend(marketIcon(id));const delta=document.createElement('span');delta.className=q.delta>0?'green':q.delta<0?'red':'muted';delta.textContent=q.delta==null?'Chưa có mốc trước':(q.delta>0?'↗ +':q.delta<0?'↘ ':'→ ')+fmt(q.delta)+' đ';head.append(title,delta);
  const quote=document.createElement('div');quote.className='watchvalue';quote.textContent=Number.isFinite(q.value)?fmt(q.value)+(q.high>q.value?'–'+fmt(q.high):''):'—';const unit=document.createElement('small');unit.textContent=q.unit+' · '+q.region;
  const fresh=document.createElement('small');fresh.className='watchfresh';fresh.textContent=freshnessText(q.sourceAt,q.checkedAt,q.kind);if(fresh.textContent.includes('Giá cũ'))fresh.classList.add('stale');
  card.append(head,quote,unit);const spark=watchSpark(q.series);if(spark)card.append(spark);card.append(fresh);holder.append(card);
@@ -341,4 +341,25 @@ function mountWatchlist(){
  document.querySelector('main').append(section);$('editwatch').onclick=editWatchPins;
  const nav=document.createElement('button');nav.dataset.go='watchlist';nav.innerHTML='<span>☆</span>Của tao';nav.onclick=()=>go('watchlist');document.querySelector('nav').prepend(nav);
  setInterval(()=>{if(!document.hidden&&page==='watchlist')renderWatchlist();},2000);go('watchlist');
+}
+
+// Local SVGs use currentColor: no emoji/font substitutions or remote assets.
+function marketIcon(kind){
+ const fuel=['e10','e5','do','e10v','dov','kerosene','market'].includes(kind);
+ const shapes={
+ watchlist:'<path d="m9 3 6 0-1 6 4 4v2h-5v6l-1 1-1-1v-6H6v-2l4-4z"/>',
+ agriculture:'<path d="M12 21V10M12 15C5 15 3 11 3 6c6 0 9 3 9 8M12 11c0-6 3-8 9-8 0 6-3 9-9 9"/>',
+ fuel:'<rect x="3" y="3" width="11" height="18" rx="2"/><path d="M3 10h11M6 6h5M14 12h2a2 2 0 0 1 2 2v3a2 2 0 0 0 4 0V9l-4-4M19 6v4h3M2 21h13"/>',
+ gold:'<path d="M5 7h14l3 12H2L5 7zM5 7l3-3h8l3 3M8 11h4M7 15h2"/>',
+ settings:'<path d="M5 16h14l-2-3V9a5 5 0 0 0-10 0v4l-2 3zM10 20a2 2 0 0 0 4 0M12 2v2"/>',
+ coffee:'<ellipse cx="12" cy="12" rx="7" ry="10" transform="rotate(35 12 12)"/><path d="M16 4c-7 2-1 8-8 16"/>',
+ pepper:'<path d="M12 3v4M12 5c2-3 5-3 7-2-1 3-4 4-7 2"/><circle cx="9" cy="9" r="2.5"/><circle cx="15" cy="10" r="2.5"/><circle cx="8" cy="15" r="2.5"/><circle cx="14" cy="16" r="2.5"/><circle cx="11" cy="21" r="1.5"/>',
+ cau:'<path d="M12 7V3M12 5C8 1 4 3 3 5c4 1 7 1 9 0M12 5c4-4 8-2 9 0-4 1-7 1-9 0"/><ellipse cx="8" cy="14" rx="4" ry="6"/><ellipse cx="16" cy="14" rx="4" ry="6"/><path d="M8 11v6M16 11v6"/>',
+ rice:'<path d="M12 22V3M12 9C7 9 5 6 5 3c4 0 7 3 7 6M12 14c-5 0-7-3-7-6 4 0 7 3 7 6M12 19c-5 0-7-3-7-6 4 0 7 3 7 6M12 9c5 0 7-3 7-6-4 0-7 3-7 6M12 14c5 0 7-3 7-6-4 0-7 3-7 6M12 19c5 0 7-3 7-6-4 0-7 3-7 6"/>'
+ };
+ const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('class','marketicon');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.65');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');svg.innerHTML=shapes[fuel?'fuel':kind]||shapes.watchlist;return svg;
+}
+function installMarketIcons(){
+ for(const button of document.querySelectorAll('nav button[data-go]')){const old=button.querySelector('span');if(old)old.replaceWith(marketIcon(button.dataset.go));}
+ const edit=$('editwatch');if(edit){edit.textContent='Chỉnh ghim';edit.prepend(marketIcon('watchlist'));}
 }
