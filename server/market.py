@@ -138,6 +138,7 @@ def check_quote(q, docs, family, today):
         e, de, text = norm(q['evidence']), norm(q['dateEvidence']), norm(source)
         if not 10 <= len(e) <= 600 or not 6 <= len(de) <= 250 or e not in text or de not in text: return False
         if family != 'fuel' and norm(q['region']) not in e: return False
+        if family in ('cau','rice') and norm(q['grade']) not in e:return False
         if family == 'coffee' and norm(q['grade']) != 'robusta nhân xô': return False
         if family == 'pepper' and norm(q['grade']) != 'tiêu đen xô': return False
         if family == 'cau' and not norm(q['grade']).startswith('cau tươi'): return False

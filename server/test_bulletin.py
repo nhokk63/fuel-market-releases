@@ -13,6 +13,13 @@ class BulletinTests(unittest.TestCase):
         self.assertEqual(r['sources'][0]['url'],self.docs[0]['url'])
         self.assertEqual(r['evidence'][0]['quote'],self.docs[0]['text'])
         self.assertIn('[1]',r['reason'])
+    def test_price_candidates_use_collector_urls(self):
+        self.raw['priceCandidates']=[dict(id='cau',region='Đắk Lắk',grade='Cau tươi',day='2026-10-24',low=90800,high=90800,unit='VND/kg',evidenceId='1.1',dateEvidenceId='1.1',source='https://invented.invalid')]
+        result=compile_report(self.raw,self.docs,evidence_pack(self.docs))
+        self.assertEqual(result['quotes'][0]['source'],self.docs[0]['url'])
+        self.assertEqual(result['quotes'][0]['evidence'],self.docs[0]['text'])
+        self.raw['priceCandidates'][0]['dateEvidenceId']='99.9'
+        self.assertEqual(compile_report(self.raw,self.docs,evidence_pack(self.docs))['quotes'],[])
     def test_invented_numeric_price_rejected(self):
         self.raw['facts'][0]['text']='Giá cà phê tăng lên 95.000 đồng/kg.'
         with self.assertRaises(ValueError):compile_report(self.raw,self.docs,evidence_pack(self.docs))

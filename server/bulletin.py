@@ -6,7 +6,8 @@ PROMPT = '''Viết bản tin thị trường tiếng Việt CHỈ từ evidence 
 Schema: {"direction":"unknown","facts":[{"text":"Sự kiện thị trường","evidenceIds":["1.2"]}],"drivers":[{"text":"Suy luận tác động từ sự kiện","evidenceIds":["1.2"]}],"shortTerm":{"base":"Nếu ...","up":"Nếu ...","down":"Nếu ...","invalidation":"Nếu ..."},"mediumTerm":{"base":"Nếu ...","up":"Nếu ...","down":"Nếu ...","invalidation":"Nếu ..."},"watch":["Tín hiệu cần theo dõi"],"limits":["Dữ liệu còn thiếu"],"risk":"Rủi ro chính"}.
 facts: 3–6 đoạn, mỗi đoạn 2–3 câu, mô tả giá theo đúng ngày, vùng, loại, đơn vị; bối cảnh quốc tế chỉ khi evidence có, ghi kỳ hạn nếu có. Không gán giá cũ là hôm nay. Mỗi đoạn dẫn đúng evidenceIds có thật. drivers: 2–4 đoạn giải thích cơ chế, không khẳng định thời tiết, mùa vụ, tâm lý hoặc cung cầu chưa được tài liệu xác nhận. Dùng ngôn ngữ suy luận rõ ràng. Không tự viết [số] hoặc URL.
 shortTerm là dự báo một đến hai tuần; mediumTerm là một đến hai tháng. Mỗi trường là 2 câu bắt đầu Nếu: kịch bản cơ sở/tăng/giảm và điều kiện làm sai nhận định. Các kịch bản, watch, limits, risk TUYỆT ĐỐI không có chữ số hoặc mốc giá; không bịa xác suất. Chỉ dùng điều kiện định tính và nói rõ thiếu cơ sở khi dữ liệu ít. Không kết luận thị trường đi ngang chỉ vì thiếu giá mới. direction up/down/flat/unknown là triển vọng cơ sở, chọn unknown nếu thiếu căn cứ.
-Không chép lại nguyên văn dài. Không dùng trí nhớ để bổ sung số liệu/sự kiện. Nếu không có bằng chứng liên quan thì facts/drivers trả [], direction unknown, các kịch bản nói chưa đủ cơ sở. Chỉ phân tích đúng family yêu cầu, đừng lấy số liệu mặt hàng khác.'''
+Không chép lại nguyên văn dài. Không dùng trí nhớ để bổ sung số liệu/sự kiện. Nếu không có bằng chứng liên quan thì facts/drivers trả [], direction unknown, các kịch bản nói chưa đủ cơ sở. Chỉ phân tích đúng family yêu cầu, đừng lấy số liệu mặt hàng khác.
+Riêng family cau hoặc rice, thêm priceCandidates:[{id,region,grade,day,low,high,unit,evidenceId,dateEvidenceId}]. Chỉ giá giao dịch hiện tại có ngày rõ YYYY-MM-DD, đơn vị VND/kg, low/high là số nguyên. evidenceId trỏ đoạn chứa đúng địa phương, loại và cả hai số giá; dateEvidenceId trỏ đoạn ngày bảng giá cùng nguồn. grade phải nguyên văn và bắt đầu Cau tươi hoặc Lúa khô; tuyệt đối không dùng lúa tươi/gạo thay lúa khô. Không suy ra giá từ dự báo, không lấy trung bình khoảng giá. Thiếu chứng cứ thì priceCandidates:[]. Với family khác trả priceCandidates:[].'''
 
 
 def evidence_pack(docs):
@@ -95,4 +96,11 @@ def compile_report(raw, docs, evidence, verified_quotes=None):
     sources=[{'url':docs[i-1]['url'],'title':urlparse(docs[i-1]['url']).hostname} for i in used]
     try:risk=qualitative(raw.get('risk'))
     except ValueError:risk='Nguồn có thể cập nhật chậm; dự báo phụ thuộc các điều kiện đã nêu.'
-    return {'quotes':[], 'report':{'direction':raw.get('direction','unknown'),'horizon':'1–2 tuần và 1–2 tháng','reason':'\n\n'.join(sections),'risk':risk,'sources':sources,'evidence':[{'source':docs[e['sourceId']-1]['url'],'quote':e['text']} for e in cited]}}
+    candidates=[]
+    for row in raw.get('priceCandidates',[]) if isinstance(raw.get('priceCandidates'),list) else []:
+        if not isinstance(row,dict):continue
+        e=byid.get(row.get('evidenceId'));de=byid.get(row.get('dateEvidenceId'))
+        if not e or not de or e['sourceId']!=de['sourceId']:continue
+        source=docs[e['sourceId']-1]['url']
+        candidates.append({**{k:row.get(k) for k in ['id','region','grade','day','low','high','unit']},'source':source,'author':urlparse(source).hostname,'evidence':e['text'],'dateEvidence':de['text']})
+    return {'quotes':candidates, 'report':{'direction':raw.get('direction','unknown'),'horizon':'1–2 tuần và 1–2 tháng','reason':'\n\n'.join(sections),'risk':risk,'sources':sources,'evidence':[{'source':docs[e['sourceId']-1]['url'],'quote':e['text']} for e in cited]}}

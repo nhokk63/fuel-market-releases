@@ -33,6 +33,12 @@ class EvidenceTests(unittest.TestCase):
         with self.assertRaises(ValueError):validate(copy.deepcopy(raw),docs,'coffee',dt.datetime(2026,10,23,tzinfo=UTC))
         raw['report']['reason']='Thông tin [1].';raw['report']['evidence'][0]['quote']='Giá bịa đặt không có trong tài liệu'
         with self.assertRaises(ValueError):validate(raw,docs,'coffee',dt.datetime(2026,10,23,tzinfo=UTC))
+    def test_dry_rice_cannot_relabel_wet_rice(self):
+        q=dict(self.q,id='rice',grade='Lúa khô OM 18',low=8000,high=8000,evidence='Đắk Lắk Lúa tươi OM 18 8.000')
+        docs=[dict(url=q['source'],text='Ngày 23/10/2026 '+q['evidence'])]
+        self.assertFalse(check_quote(q,docs,'rice',self.today))
+        q['evidence']='Đắk Lắk Lúa khô OM 18 8.000';docs[0]['text']='Ngày 23/10/2026 '+q['evidence']
+        self.assertTrue(check_quote(q,docs,'rice',self.today))
     def test_css_numbers_and_scripts(self):
         p = Page('<style>.p:after{content:"90.800"}</style><script>91000</script><tr><td>Đắk Lắk</td><td><span class="p"></span></td></tr>')
         self.assertIn('90.800',p.text); self.assertNotIn('91000',p.text)
