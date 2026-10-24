@@ -97,3 +97,16 @@ nav .marketicon{width:23px;height:23px}
 #detailpin{padding:6px;font-size:10px}.markettoolsdialog .reportbody{white-space:normal}.marketform{display:flex;flex-direction:column;gap:8px;margin:12px 0 18px}.marketform input,.marketform select{width:100%;min-width:0;padding:12px;background:#141e24;color:var(--ink);border:1px solid #35434e;border-radius:8px;font-size:14px}.marketform .red{font-size:12px;margin:0}.toolcard{padding:12px;margin-bottom:8px;background:#141e24;border:1px solid #2b3942;border-radius:8px;font-size:13px}.toolcard p{font-size:12px;white-space:pre-line;line-height:1.6}.holdingtotal{font-size:15px;color:var(--green);font-weight:600}
 
 .pill:not(.flat):not(.down){background:#13372d;color:#43d5a6}.pill.down{background:#381b23;color:#ff8090}
+/* Dense quote rows: name/price, specification/change, freshness/chart. */
+#watchlist:not(.fullquotes) #watchrows{gap:4px}
+#watchlist:not(.fullquotes) .watchcard{padding:6px 8px;grid-template-columns:minmax(0,1fr) 96px;gap:2px 6px;border-radius:6px;align-items:center}
+#watchlist:not(.fullquotes) .watchhead{display:contents}
+#watchlist:not(.fullquotes) .watchhead b{grid-column:1;grid-row:1;font-size:11px;line-height:1.25;gap:4px;overflow-wrap:anywhere}
+#watchlist:not(.fullquotes) .watchhead b .marketicon{width:15px;height:15px}
+#watchlist:not(.fullquotes) .watchvalue{grid-column:2;grid-row:1;font-size:19px;line-height:1.15;text-align:right;letter-spacing:-.3px}
+#watchlist:not(.fullquotes) .watchhead span{grid-column:2;grid-row:2;font-size:9px;text-align:right}
+#watchlist:not(.fullquotes) .watchcard>small:not(.watchfresh){grid-column:1;grid-row:2;font-size:9px;line-height:1.25}
+#watchlist:not(.fullquotes) .watchfresh{grid-column:1;grid-row:3;font-size:9px!important;line-height:1.25;margin:0;overflow-wrap:anywhere}
+#watchlist:not(.fullquotes) .watchspark{grid-column:2;grid-row:3;width:76px;height:18px;justify-self:end}
+#watchlist:not(.fullquotes)>.titlebar{min-height:30px}
+#watchlist:not(.fullquotes)>.hint{margin:0;line-height:1.25}
