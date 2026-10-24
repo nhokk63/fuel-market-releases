@@ -110,3 +110,21 @@ nav .marketicon{width:23px;height:23px}
 #watchlist:not(.fullquotes) .watchspark{grid-column:2;grid-row:3;width:76px;height:18px;justify-self:end}
 #watchlist:not(.fullquotes)>.titlebar{min-height:30px}
 #watchlist:not(.fullquotes)>.hint{margin:0;line-height:1.25}
+/* Keep the watchlist chrome shallow so quotes get the screen space. */
+#app:has(#watchlist:not([hidden])){gap:3px;padding-top:5px}
+#app:has(#watchlist:not([hidden])) header{height:29px;gap:6px}
+#app:has(#watchlist:not([hidden])) .brand{font-size:14px;gap:5px}
+#app:has(#watchlist:not([hidden])) .mark{width:19px;height:22px}
+#app:has(#watchlist:not([hidden])) #refresh{margin-left:0;width:30px;height:29px;font-size:21px}
+#app:has(#watchlist:not([hidden])) #openupdates{width:28px;height:29px;border-radius:6px}
+#app:has(#watchlist:not([hidden])) .zone{padding:4px 5px;font-size:8px}
+#app:has(#watchlist:not([hidden])) .connection{min-height:11px;line-height:11px;font-size:8px;margin:0}
+#watchlist>.titlebar,#watchlist:not(.fullquotes)>.titlebar{min-height:27px;height:27px}
+#watchlist>.titlebar h1{font-size:15px}
+#watchlist #editwatch{padding:4px;font-size:10px}
+#watchlist>.hint{display:none}
+#watchlist{gap:3px}
+#watchlist .watchtools button{padding:6px 3px}
+#watchlist:not(.fullquotes) .watchcard{grid-template-columns:minmax(0,1fr) max-content}
+#watchlist:not(.fullquotes) .watchvalue{white-space:nowrap;overflow-wrap:normal;font-size:18px}
+#watchlist:not(.fullquotes) .watchcard[data-asset="gold"] .watchvalue{font-size:16px}
