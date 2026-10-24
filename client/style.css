@@ -74,3 +74,18 @@
 nav .marketicon{width:23px;height:23px}
 .watchhead b{display:flex;align-items:center;gap:7px;min-width:0}.watchhead b .marketicon{width:20px;height:20px;color:var(--green)}
 #editwatch{display:flex;align-items:center;gap:4px}#editwatch .marketicon{width:16px;height:16px}
+
+/* Compact rows keep every quote field visible; long names wrap rather than truncate. */
+#watchrows{gap:5px}.watchcard{padding:8px 10px;border-radius:8px;display:grid;grid-template-columns:minmax(0,1fr) 82px;column-gap:8px;row-gap:2px}
+.watchhead{grid-column:1/-1;gap:6px}.watchhead b{font-size:12px;gap:5px}.watchhead b .marketicon{width:17px;height:17px}.watchhead span{flex-shrink:0;font-size:10px}
+.watchvalue{grid-column:1;grid-row:2;font-size:23px;margin:0;padding:0;line-height:1.2;overflow-wrap:anywhere}
+.watchcard>small:not(.watchfresh){grid-column:1/-1;font-size:9px;line-height:1.35}
+.watchspark{position:static;grid-column:2;grid-row:2;align-self:center;width:82px;height:23px}
+.watchfresh{grid-column:1/-1;margin-top:1px;font-size:9px!important;line-height:1.35;white-space:normal}
+#watchlist>.hint{font-size:9px}#watchlist{gap:4px}
+#detail .detailquote,#detail.trendview .detailquote{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 8px;padding:2px 0 7px;align-items:center}
+#detail #detailprice,#detail.trendview #detailprice{font-size:27px;grid-column:1;grid-row:1;margin:0}
+#detail #detaildelta{grid-column:2;grid-row:1;font-size:10px;max-width:145px}
+#detail #detailmeta{grid-column:1/-1;grid-row:2;font-size:9px;line-height:1.4}
+.detailtabs button{flex:1}.detailsourceinfo{flex-shrink:0;font-size:10px;color:var(--muted);max-height:26%;overflow:auto;border-top:1px solid #253139;padding-top:4px}
+.detailsourceinfo summary{color:var(--green);padding:5px 0;cursor:pointer}.detailsourceinfo p{margin:5px 0}.detailsourceinfo .hint{font-size:10px;line-height:1.4}
