@@ -147,3 +147,101 @@ nav .marketicon{width:23px;height:23px}
 .settingsadvanced{font-size:12px;border-top:1px solid var(--line);padding-top:10px}.settingsadvanced summary{cursor:pointer;color:var(--green)}
 #updatenotes{font-size:12px;line-height:1.5}#updateversion{font-size:11px;line-height:1.5}nav button{font-size:10px;padding:5px 0}nav .marketicon{width:22px;height:22px}
 @media(orientation:landscape){.chartdialog{padding:6px}.chartdialog .hint{font-size:9px}.chartdialog .ranges button{padding:4px 8px}.chartdialog .reportbar{min-height:28px}}
+
+/* OTA 1090414: shared optical grid. Values are CSS pixels, never device pixels. */
+:root{--edge:16px;--space:8px;--control:36px;--price-column:124px;--muted:#95a1b0;--line:#29343e;--surface:#121a20}
+#app,#app:has(#watchlist:not([hidden])){padding:8px var(--edge) 8px;gap:8px;max-width:520px}
+#app header,#app:has(#watchlist:not([hidden])) header{height:36px;min-height:36px;gap:8px;align-items:center}
+#app .brand,#app:has(#watchlist:not([hidden])) .brand{font-size:15px;line-height:20px;gap:5px;letter-spacing:0}
+#app .mark,#app:has(#watchlist:not([hidden])) .mark{width:22px;height:26px;font-size:21px}
+#app #openupdates,#app #refresh{width:36px;height:36px;flex:0 0 36px;padding:8px;display:grid;place-items:center;background:transparent;border:1px solid var(--line);border-radius:8px;color:var(--muted)}
+#app #openupdates{margin-left:auto}#app #refresh{margin-left:0}#app #openupdates.available{color:var(--green);border-color:var(--green)}
+#app header svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#app header .zone{display:none}#app>.connection{display:none!important}
+#app .page,#app #watchlist,#app #market,#app #agriculture,#app #gold{gap:8px}
+#app .titlebar,#app #watchlist>.titlebar,#app #detail>.titlebar{height:36px;min-height:36px;margin:0;gap:8px}
+#app .titlebar h1,#app #watchlist>.titlebar h1{font-size:18px;line-height:24px;font-weight:650;letter-spacing:-.3px}
+#app .quiet{min-height:32px;padding:6px 8px;font-size:12px;line-height:20px}
+#app .titlebar>.quiet:last-child{padding-right:0}#app #editwatch{height:36px;font-size:12px;padding:0;gap:4px}
+#app #editwatch .marketicon{width:16px;height:16px}
+#agrirefresh,#goldrefresh{display:none}
+#app .watchtools{display:grid;grid-template-columns:1fr 1fr;gap:8px;height:36px}
+#app .watchtools button,#app .watchtools select{height:36px;min-height:36px;margin:0;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:12px;line-height:20px;color:var(--ink)}
+#app #watchrows{display:flex;gap:6px;padding:0 0 2px;scrollbar-width:thin;scrollbar-color:#34434f transparent}
+#app #watchlist .watchcard{display:grid;grid-template-columns:minmax(0,1fr) var(--price-column);grid-template-rows:24px minmax(28px,auto) 28px;gap:2px 8px;padding:8px 10px;margin:0;border:1px solid var(--line);border-radius:8px;align-items:center;min-height:102px}
+#app #watchlist .watchhead{display:contents}
+#app #watchlist .watchhead b{grid-area:1/1;font-size:12px;line-height:16px;gap:6px;letter-spacing:0;overflow-wrap:normal}
+#app #watchlist .watchhead b .marketicon{width:18px;height:18px}
+#app #watchlist .watchvalue{grid-area:1/2;font-size:18px;font-weight:650;line-height:24px;letter-spacing:-.4px;margin:0;padding:0;text-align:right;white-space:nowrap;overflow-wrap:normal;font-variant-numeric:tabular-nums}
+#app #watchlist .watchhead>span{grid-area:2/2;align-self:start;font-size:10px;line-height:14px;text-align:right;padding-top:2px;white-space:normal}
+#app #watchlist .watchcard>small:not(.watchfresh){grid-area:2/1;align-self:start;font-size:10px;line-height:14px;padding:0;margin:0;overflow-wrap:normal}
+#app #watchlist .watchfresh{grid-area:3/1;margin:0;font-size:9px!important;line-height:14px;white-space:normal;color:var(--muted);overflow:visible}
+.watchfresh>span{display:block;white-space:nowrap}.watchfresh .stale{color:#d2ad69}
+#app #watchlist .watchspark{grid-area:3/2;position:static;width:80px;height:24px;align-self:center;justify-self:end}
+#app #watchlist.fullquotes .watchcard{grid-template-rows:28px minmax(32px,auto) 32px;padding:12px;min-height:122px}
+#app #watchlist.fullquotes .watchfresh{font-size:10px!important;line-height:16px}
+#app #watchlist.fullquotes .watchhead b{font-size:13px}#app #watchlist.fullquotes .watchcard>small:not(.watchfresh){font-size:11px;line-height:16px}
+#app .markettable{border:1px solid var(--line);border-radius:8px;scrollbar-width:thin}
+#app .markettable table{table-layout:fixed}
+#app .markettable th{height:36px;padding:8px!important;font-size:10px;line-height:16px;color:var(--muted);border-bottom:1px solid var(--line)}
+#app .markettable td{height:60px;padding:8px!important;font-size:13px;line-height:18px;border-top:0;border-bottom:1px solid var(--line);vertical-align:middle;overflow-wrap:normal}
+#app .markettable tr:last-child td{border-bottom:0}
+#app .markettable th:first-child{width:40%}#app .markettable th:nth-child(2){width:33%}#app .markettable th:last-child{width:27%}
+#app .markettable td b{font-size:14px!important;font-weight:650;line-height:18px}
+#app .markettable .assetbtn{display:block;width:100%;font-size:12px!important;line-height:17px;padding:0;white-space:normal!important}
+#app .markettable .assetbtn small{font-size:10px!important;line-height:14px;margin:2px 0 0!important}
+#app .markettable .pill{font-size:10px;line-height:16px;padding:4px 6px;min-width:52px;text-align:right;border-radius:5px}
+#app #gold .markettable th:first-child{width:34%}#app #gold .markettable th:nth-child(2),#app #gold .markettable th:last-child{width:33%}
+#app #gold .markettable td:not(:first-child){font-size:12px;letter-spacing:-.35px;white-space:nowrap;font-weight:600}
+#app .ranges{gap:4px;flex-shrink:0}#app .ranges button{min-height:32px;padding:6px 10px;font-size:12px;line-height:20px;border-radius:6px}
+#agriculture>.ranges{padding:3px;background:var(--surface);border:1px solid var(--line);border-radius:8px;height:40px}
+#agriculture>.ranges button{flex:1;padding:4px;min-height:32px}#agriculture>.ranges .selected{background:#18382d;color:var(--green)}
+#app .goldcontrols{height:auto;min-height:36px;gap:8px}#app .goldcontrols>b{font-size:12px;font-weight:500;color:var(--muted)}
+#app .goldcontrols select,#app #causeries,#app #riceseries{height:36px;min-height:36px;padding:6px 10px;font-size:12px;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+#app #goldlist{gap:8px}#app #gold .pager button,#app .pager button{min-width:36px;height:32px;padding:4px 8px}
+#app #goldlist>.setting{min-height:40px;padding:4px 0}#app #goldlist>.hint{margin:0}
+#app #detail>.titlebar{display:grid;grid-template-columns:64px minmax(0,1fr) 64px}
+#app #detailback,#app #detailpin{padding:0;font-size:11px;min-width:0;margin:0}
+#app #detailname{font-size:13px;line-height:18px;text-align:center;white-space:normal;overflow:visible}
+#app #detail .detailquote{padding:4px 0 8px;gap:4px 8px}#app #detail #detailprice{font-size:28px;line-height:32px;letter-spacing:-.7px}
+#app #detail #detaildelta{font-size:11px;line-height:16px;text-align:right;margin:0;max-width:130px}
+#app #detail #detailmeta,#app #goldmeta{font-size:10px;line-height:16px}
+#app .detailtabs{gap:0;border:1px solid var(--line);padding:3px;border-radius:8px;background:var(--surface);height:40px}
+#app .detailtabs button{height:32px;min-height:32px;padding:4px 8px;border:0;border-radius:5px;font-size:12px;line-height:20px}
+#app .detailtabs button.selected{background:#18382d;color:var(--green)}
+#app #gold:has(#golddetail:not([hidden]))>.titlebar,#app #gold:has(#golddetail:not([hidden]))>.goldcontrols{display:none}
+#app #golddetail>.titlebar{display:grid;grid-template-columns:72px minmax(0,1fr)}#app #goldname{max-width:none;font-size:13px;line-height:18px;text-align:right}
+#app .goldquotes{gap:8px;padding:4px 0 8px;border-bottom:1px solid var(--line)}#app .goldquotes>div{min-width:0;gap:4px}#app .goldquotes>div:last-child{text-align:right}
+#app #gold .goldquotes b{font-size:23px;line-height:28px;white-space:nowrap;letter-spacing:-.6px;font-variant-numeric:tabular-nums}
+#app #gold .goldquotes small{font-size:11px;line-height:16px}
+#app #detailanalysis .airesult{padding:0!important}#app .reportsummary{gap:8px}#app .reportsummary>div{padding:10px 12px;border:1px solid var(--line);border-left:2px solid var(--green);border-radius:8px;background:var(--surface)}
+#app .reportsummary b{font-size:10px;line-height:16px}#app .reportsummary p{font-size:12px;line-height:18px}
+#app .hint,#app .source{font-size:10px;line-height:15px}#app .source span{font-size:10px}
+#app .setting{padding:12px 0;gap:12px;min-height:56px}#app .setting b{font-size:13px;line-height:18px}#app .setting small{font-size:11px;line-height:16px;margin-top:3px}
+#app .quick{gap:8px}#app .quick button,#app .primary{min-height:36px;font-size:12px;line-height:18px;border-radius:8px;padding:8px}
+#app nav{height:54px;min-height:54px;padding:6px 0 0;gap:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:stretch}
+#app nav button{padding:2px 0;gap:4px;font-size:10px;line-height:14px;min-width:0;border-radius:0}#app nav button>span{width:22px;height:22px;display:grid;place-items:center}#app nav .marketicon{width:22px;height:22px}
+.reportdialog{padding:16px;gap:12px}.reportbar{min-height:36px}.reportbar button{min-height:36px;padding:6px 12px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:var(--surface)}
+@media(max-width:359px){:root{--edge:12px;--price-column:112px}#app .brand{font-size:13px!important}#app #watchlist .watchvalue{font-size:16px}#app #gold .goldquotes b{font-size:20px}#app .markettable td{padding:6px!important}#app #gold .markettable td:not(:first-child){font-size:11px}}
+/* Equal row tracks, with timestamps on their own shared baseline. */
+#app #watchlist .watchcard{grid-template-rows:24px 28px 14px;min-height:84px;padding:6px 10px}
+#app #watchlist .watchfresh{grid-area:3/1/4/3;display:grid;grid-template-columns:1fr 1fr;gap:8px;line-height:14px}
+#app #watchlist .watchfresh>span:last-child{text-align:right}
+#app #watchlist .watchspark{grid-area:2/2;width:72px;height:12px;align-self:end}
+#app #watchlist .watchhead>span{padding-top:0;font-size:9px}
+#app #watchlist.fullquotes .watchcard{grid-template-rows:28px 40px 32px}
+#app #watchlist.fullquotes .watchfresh{display:block}
+#app #watchlist.fullquotes .watchfresh>span:last-child{text-align:left}
+#app #watchlist.fullquotes .watchspark{height:22px}
+@media(max-width:359px){#app #watchlist .watchfresh{font-size:8px!important;gap:4px}#app #watchlist .watchcard>small:not(.watchfresh){font-size:9px}}
+
+#app #detailback,#app #goldback{white-space:nowrap;text-align:left;padding:0;font-size:11px}
+#app #watchlist .watchvalue.price-range{font-size:12px!important;letter-spacing:-.2px}
+#app .markettable{border:0;border-top:1px solid var(--line);border-radius:0}
+#app .markettable thead{background:var(--surface)}
+#app .markettable th{background:var(--surface)}
+
+#app #agriculture .markettable td:nth-child(2){font-weight:650;font-size:14px}
+#app #gold .markettable td{height:84px}
+#market .source>#checked{display:none}#market .source>#effective{display:block}
+#app #market .connection{min-height:0;line-height:15px;font-size:10px;display:block}#app #market .connection span{white-space:normal}
