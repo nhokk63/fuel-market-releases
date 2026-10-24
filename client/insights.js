@@ -139,7 +139,7 @@ async function legacySyncAi(){
  finally{job.leaseUntil=0;writeStore(jobKey,job);if(lease)MarketAPI.finishAnalysis(lease,success);aiBusy=false;aiProgress='';repaintAnalysis();}
 }
 function directionLabel(d){return {up:'↗ Có thể tăng',down:'↘ Có thể giảm',flat:'→ Có thể đi ngang',unknown:'Chưa đủ cơ sở'}[d];}
-function renderAi(){const r=readStore('ai-results',null),x=SharedMarket.report($('aipicker').value)||r?.items?.find(x=>x.id===$('aipicker').value&&x.scope===analysisScope(analysisAsset($('aipicker').value))),expired=x&&Date.parse(x.expiresAt||r.expiresAt)<=Date.now();$('aistatus').textContent=aiBusy?aiProgress:readStore('ai-error','')||(x?(expired?'Dự báo đã hết hiệu lực · ':'Cập nhật ')+new Date(x?.generatedAt||r.generatedAt).toLocaleString('vi-VN'):'Chưa có bản tin chung cho mặt hàng này · đang chờ nguồn và phân tích hợp lệ');$('aidirection').textContent=x?directionLabel(x.direction):'Chưa có dự báo';$('aidirection').style.color=!x||expired?'var(--muted)':x.direction==='up'?(Object.hasOwn(AGRI_LABELS,x.id)?'var(--green)':'var(--red)'):x.direction==='down'?(Object.hasOwn(AGRI_LABELS,x.id)?'var(--red)':'var(--green)'):'var(--muted)';$('aihorizon').textContent=x?x.horizon+(expired?' · Hết hiệu lực':''):'';$('aireason').textContent=x?.reason||'AI phân tích lịch sử thật và tin có nguồn. Không đủ dữ liệu thì không đoán giá.';$('airisk').textContent=x?'Rủi ro: '+x.risk:'';$('aisources').replaceChildren();if(x?.sources?.length){const pick=document.createElement('select');pick.setAttribute('aria-label','Nguồn dự báo');for(const source of x.sources){const o=document.createElement('option');o.value=source.url;o.textContent='['+(x.sources.indexOf(source)+1)+'] '+(source.title||new URL(source.url).hostname);pick.append(o);}const open=document.createElement('button');open.className='quiet';open.textContent='Đọc nguồn ↗';open.onclick=()=>window.Updater&&Updater.openSource(pick.value);$('aisources').append(pick,open);} $('airefresh').disabled=aiBusy;if(document.getElementById('aitextpager'))requestAnimationFrame(()=>renderAiPages(x));}
+function renderAi(){const r=readStore('ai-results',null),x=SharedMarket.report($('aipicker').value)||r?.items?.find(x=>x.id===$('aipicker').value&&x.scope===analysisScope(analysisAsset($('aipicker').value))),expired=x&&Date.parse(x.expiresAt||r.expiresAt)<=Date.now();$('aistatus').textContent=aiBusy?aiProgress:readStore('ai-error','')||(x?(expired?'Dự báo đã hết hiệu lực · ':'Cập nhật ')+new Date(x?.generatedAt||r.generatedAt).toLocaleString('vi-VN'):'Chưa có bản tin chung cho mặt hàng này · đang chờ nguồn và phân tích hợp lệ');$('aidirection').textContent=x?directionLabel(x.direction):'Chưa có dự báo';$('aidirection').style.color=!x||expired?'var(--muted)':x.direction==='up'?(Object.hasOwn(AGRI_LABELS,x.id)?'var(--green)':'var(--red)'):x.direction==='down'?(Object.hasOwn(AGRI_LABELS,x.id)?'var(--red)':'var(--green)'):'var(--muted)';$('aihorizon').textContent=x?x.horizon+(expired?' · Hết hiệu lực':''):'';$('airisk').textContent=x?'Rủi ro: '+x.risk:'';$('aisources').replaceChildren();if(x?.sources?.length){const pick=document.createElement('select');pick.setAttribute('aria-label','Nguồn dự báo');for(const source of x.sources){const o=document.createElement('option');o.value=source.url;o.textContent='['+(x.sources.indexOf(source)+1)+'] '+(source.title||new URL(source.url).hostname);pick.append(o);}const open=document.createElement('button');open.className='quiet';open.textContent='Đọc nguồn ↗';open.onclick=()=>window.Updater&&Updater.openSource(pick.value);$('aisources').append(pick,open);} $('airefresh').disabled=aiBusy;if(document.getElementById('aitextpager'))requestAnimationFrame(()=>renderAiPages(x));}
 function aiState(){try{return window.MarketAPI?JSON.parse(MarketAPI.state()):{};}catch{return {};}}
 function aiProvider(){return 'openrouter';}
 function aiIdentity(){const s=aiState();return aiProvider()+':'+(s.model||'openrouter/free');}
@@ -189,17 +189,24 @@ if(document.getElementById('detail')){
  window.addEventListener('resize',()=>{if(page==='detail'&&detailTab==='chart')Object.hasOwn(AGRI_LABELS,detailId)?drawAgriChart():chart();});
 }
 
-function renderAiPages(x){
- const area=$('aireason'),pager=$('aitextpager');$('airisk').textContent='';
- const text=x?[(x.mode==='market-news'?'':'Phân tích: ')+x.reason,x.risk?'\n\nRủi ro: '+x.risk:''].join(''):'Mở app để nhận bản tin giá và xu hướng dùng chung. Báo cáo được làm mới định kỳ từ nhiều nguồn; từng bài ghi rõ ngày dữ liệu, căn cứ và điều kiện dự báo. Chưa có kết quả thì app giữ báo cáo cũ kèm thời điểm.';
- pager.hidden=false;const limit=area.clientHeight;if(limit<20)return;
- const chunks=[];let rest=text;
- while(rest){let lo=1,hi=rest.length,best=1;while(lo<=hi){const mid=(lo+hi)>>1;area.textContent=rest.slice(0,mid);if(area.scrollHeight<=limit+1){best=mid;lo=mid+1;}else hi=mid-1;}
- let cut=best;if(cut<rest.length){const space=rest.lastIndexOf(' ',cut);if(space>cut*.65)cut=space;}chunks.push(rest.slice(0,cut));rest=rest.slice(cut).trimStart();}
- if(chunks.length<=1){pager.hidden=true;area.textContent=text;aiTextPage=0;}else{aiTextPage=Math.min(aiTextPage,chunks.length-1);area.textContent=chunks[aiTextPage];}
- $('aitextcount').textContent=(aiTextPage+1)+' / '+Math.max(1,chunks.length);$('aitextprev').disabled=aiTextPage===0;$('aitextnext').disabled=aiTextPage>=chunks.length-1;
+function renderReportText(area,text){
+ if(area.dataset.report===text)return;
+ area.dataset.report=text;area.replaceChildren();area.scrollTop=0;
+ for(const block of text.split(/\n\s*\n/)){const part=document.createElement('p');part.textContent=block;area.append(part);}
 }
-if(document.getElementById('detail')){const pager=document.createElement('div');pager.id='aitextpager';pager.className='pager';pager.hidden=true;pager.innerHTML='<button id="aitextprev" aria-label="Phân tích trước">‹</button><span id="aitextcount"></span><button id="aitextnext" aria-label="Phân tích tiếp">›</button>';$('aireason').parentElement.append(pager);$('aitextprev').onclick=()=>{aiTextPage--;renderAi();};$('aitextnext').onclick=()=>{aiTextPage++;renderAi();};}
+function expandReport(area,title){
+ const dialog=document.createElement('dialog');dialog.className='reportdialog';
+ const bar=document.createElement('div');bar.className='reportbar';
+ const heading=document.createElement('b');heading.textContent=title;
+ const close=document.createElement('button');close.textContent='Đóng ×';close.onclick=()=>dialog.close();bar.append(heading,close);
+ const body=document.createElement('article');body.className='reportbody';renderReportText(body,area.dataset.report||area.textContent);
+ dialog.append(bar,body);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove());dialog.showModal();
+}
+function renderAiPages(x){
+ $('airisk').textContent='';
+ renderReportText($('aireason'),x?[x.reason,x.risk?'Rủi ro: '+x.risk:''].filter(Boolean).join('\n\n'):'Chưa có báo cáo hợp lệ. App sẽ tự kiểm tra lại; giá được cập nhật riêng.');
+}
+if(document.getElementById('detail')){const pager=document.createElement('div');pager.id='aitextpager';pager.className='reportbar';const button=document.createElement('button');button.textContent='Đọc toàn màn hình ↗';button.onclick=()=>expandReport($('aireason'),$('detailname').textContent+' · '+$('aistatus').textContent);pager.append(button);$('aireason').parentElement.append(pager);}
 
 // Historical search is an explicit, resumable job; it never manufactures missing days.
 const HISTORY_DOMAINS={coffee:['giacaphe.com','caphehomnay.com','giacaphehomnay.vn','giacaphe.biz','socongthuong.daklak.gov.vn'],pepper:['giatieu.com','giatieu.com.vn','giacaphe.com','socongthuong.daklak.gov.vn'],cau:['gcaeco.vn','facebook.com','www.facebook.com','m.facebook.com']};

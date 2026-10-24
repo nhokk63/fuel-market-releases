@@ -1,0 +1,14 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const {parseHTML}=require('../../test-runtime/node_modules/linkedom');
+const {document}=parseHTML('<html><body><article id="report"></article></body></html>');
+const root=process.env.CLIENT_DIR||__dirname+'/../client/';
+const s=fs.readFileSync(root+'insights.js','utf8');
+const c=vm.createContext({document});
+vm.runInContext(s.slice(s.indexOf('function renderReportText('),s.indexOf('function expandReport(')),c);
+const area=document.getElementById('report');c.area=area;c.text='Giá tham khảo\n• Đắk Lắk 140.000 đ/kg\n\n'+('Nội dung có nguồn. '.repeat(400))+'\n\n<script>alert(1)</script>';
+vm.runInContext('renderReportText(area,text)',c);
+assert.equal(area.textContent,c.text.replace(/\n\s*\n/g,''));assert.equal(area.querySelector('script'),null);assert.equal(area.children.length,3);
+area.scrollTop=150;vm.runInContext('renderReportText(area,text)',c);assert.equal(area.scrollTop,150);
+assert(!fs.readFileSync(root+'gold.js','utf8').includes('chunks[aiPage]'));
+assert(!s.includes('chunks[aiTextPage]'));
+console.log('PASS: full report including final paragraph, safe text rendering, scroll preserved, no paging');

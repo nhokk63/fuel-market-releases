@@ -38,3 +38,22 @@
 #riceseries{flex-shrink:0;max-width:100%;font-size:11px;padding:7px}#agriculture:has(option[value="rice"]){gap:7px}
 
 #gold{gap:7px;min-height:0}#goldlist,#golddetail,#goldchartpanel,#goldtrendpanel{display:flex;flex-direction:column;gap:8px;min-height:0;flex:1}#gold [hidden]{display:none!important}.goldcontrols{display:flex;align-items:center;gap:8px;justify-content:space-between}.goldcontrols select{min-width:0;max-width:65%;padding:6px;font-size:11px}#gold table{font-size:12px}#gold td{padding:10px 0}#gold td:first-child{width:46%}#gold .assetbtn{font-size:11px;text-align:left}#gold .assetbtn small{font-size:9px}#goldname{font-size:12px;text-align:right;max-width:70%}.goldquotes{display:grid;grid-template-columns:1fr 1fr;gap:10px}.goldquotes div{display:flex;flex-direction:column;gap:4px}.goldquotes b{font-size:23px;letter-spacing:-.8px}#goldplot{width:100%;flex:1;min-height:90px}#gold .hint{font-size:10px;line-height:1.45;margin:0}#goldstatus{max-height:3em;overflow:hidden;flex-shrink:0}#goldfx{white-space:pre-line}#goldsource,#goldfxlink{font-size:9px;padding:3px;text-align:left}#gold .ranges{margin:0;gap:5px}#gold .ranges button{padding:7px;font-size:12px}#goldmeta{font-size:10px}#goldaitext{flex:1;min-height:0;overflow:auto;white-space:pre-wrap;font-size:13px;line-height:1.6}#gold .pager{margin:0}#gold .titlebar{margin:0}#gold .setting{padding:5px;font-size:12px}#goldlist .hint{margin-top:auto}#gold .quiet{padding:5px}@media(max-height:680px){#gold{gap:4px}#gold td{padding:7px 0}#golddetail,#goldchartpanel{gap:4px}.goldquotes b{font-size:19px}#gold .hint{font-size:9px}#gold h1{font-size:19px}}
+
+/* Continuous reports: readable density, full width, no artificial pages. */
+#detail.trendview{gap:5px}
+#detailanalysis .airesult{padding:8px!important;gap:4px;border:0;background:transparent;border-radius:0}
+#detailanalysis .airesult #aireason,#goldaitext{overflow:auto!important;overscroll-behavior:contain;font-size:13px;line-height:1.5;color:var(--text,#e6e9ed);white-space:pre-wrap}
+#aireason p,#goldaitext p,.reportbody p{margin:0 0 12px}
+#detailanalysis .airesult h2{font-size:18px!important;margin:0!important}
+#detailanalysis .detailaiinner>.hint:last-child{display:none}
+.reportbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0}
+.reportbar button{padding:6px 10px;font-size:12px}
+.reportdialog{box-sizing:border-box;position:fixed;inset:0;margin:0;width:100%;max-width:none;height:100%;max-height:none;padding:12px;background:#0b1013;color:#e6e9ed;border:0}
+.reportdialog[open]{display:flex;flex-direction:column;gap:12px}
+.reportdialog .reportbar b{font-size:12px;line-height:1.4}
+.reportbody{flex:1;min-height:0;overflow:auto;white-space:pre-wrap;font-size:14px;line-height:1.55}
+#gold.trendview>.titlebar,#gold.trendview>.goldcontrols,#gold.trendview #goldfx,#gold.trendview #goldfx+div,#gold.trendview #goldaiconfig{display:none}
+#gold.trendview .goldquotes b{font-size:22px}
+#gold.trendview .goldquotes small{font-size:11px}
+#gold.trendview #goldaitime,#gold.trendview #goldstatus{font-size:10px}
+#gold.trendview #goldtrendpanel{gap:5px}
