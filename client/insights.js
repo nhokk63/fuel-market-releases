@@ -327,10 +327,10 @@ function renderWatchlist(){
  const holder=$('watchrows');if(!holder)return;
  const catalog=watchCatalog(),pins=watchPins().filter(id=>watchFilterMatches(id,readStore('watch-filter','all'))),signature=JSON.stringify(pins.map(id=>[id,watchQuote(id)]));if(holder.dataset.snapshot===signature)return;holder.dataset.snapshot=signature;const scroll=holder.scrollTop,oldCards=new Map([...holder.querySelectorAll('[data-asset]')].map(c=>[c.dataset.asset,c]));
  for(const id of pins){const q=watchQuote(id),fingerprint=JSON.stringify(q),old=oldCards.get(id);oldCards.delete(id);if(old?.dataset.quote===fingerprint){holder.append(old);continue;}const card=document.createElement('button');card.className='watchcard';card.dataset.asset=id;card.dataset.quote=fingerprint;card.dataset.price=String(q.value);if(old&&old.dataset.price!==String(q.value))card.classList.add('pricechanged');if(old)old.remove();card.onclick=()=>{if(id==='gold'){Gold.open('world','watchlist');go('gold');}else{agriRegion='daklak';openDetail(id);}};
- const head=document.createElement('div');head.className='watchhead';const title=document.createElement('b');title.textContent=PRODUCTS.find(x=>x.id===id)?.label||(id==='gold'?'Vàng thế giới':catalog.find(x=>x.id===id).label);title.prepend(marketIcon(id));const delta=document.createElement('span');delta.className=q.delta>0?'green':q.delta<0?'red':'muted';delta.textContent=q.delta==null?'Chưa có mốc trước':(q.delta>0?'↗ +':q.delta<0?'↘ ':'→ ')+fmt(q.delta)+' đ';head.append(title,delta);
- const quote=document.createElement('div');quote.className='watchvalue'+(q.high>q.value?' price-range':'');quote.textContent=Number.isFinite(q.value)?fmt(q.value)+(q.high>q.value?'–'+fmt(q.high):''):'—';const unit=document.createElement('small');unit.textContent=q.unit+' · '+q.region+(PRODUCTS.find(x=>x.id===id)?' · '+PRODUCTS.find(x=>x.id===id).name:id==='gold'?' · XAU':'');
- const fresh=document.createElement('small');fresh.className='watchfresh';for(const text of freshnessText(q.sourceAt,q.checkedAt,q.kind).split('\n')){const line=document.createElement('span');line.textContent=text.replace('Kiểm tra nguồn:','Kiểm tra:').replace('Chưa kiểm tra nguồn trên máy','Chưa kiểm tra trên máy');fresh.append(line);}if(fresh.textContent.includes('Giá cũ'))fresh.firstElementChild.classList.add('stale');
- card.append(head,quote,unit);const spark=watchSpark(q.series);if(spark)card.append(spark);else{const gap=document.createElement('span');gap.className='watchspark watchsparkempty';gap.setAttribute('aria-hidden','true');card.append(gap);}card.append(fresh);holder.append(card);
+ const head=document.createElement('div');head.className='watchhead';const title=document.createElement('b');title.textContent=catalog.find(x=>x.id===id).label;title.prepend(marketIcon(id));const delta=document.createElement('span');delta.className=q.delta>0?'green':q.delta<0?'red':'muted';delta.textContent=q.delta==null?'Chưa có mốc trước':(q.delta>0?'↗ +':q.delta<0?'↘ ':'→ ')+fmt(q.delta)+' đ';head.append(title,delta);
+ const quote=document.createElement('div');quote.className='watchvalue';quote.textContent=Number.isFinite(q.value)?fmt(q.value)+(q.high>q.value?'–'+fmt(q.high):''):'—';const unit=document.createElement('small');unit.textContent=q.unit+' · '+q.region;
+ const fresh=document.createElement('small');fresh.className='watchfresh';fresh.textContent=freshnessText(q.sourceAt,q.checkedAt,q.kind).replace('\n',' · ');if(fresh.textContent.includes('Giá cũ'))fresh.classList.add('stale');
+ card.append(head,quote,unit);const spark=watchSpark(q.series);if(spark)card.append(spark);card.append(fresh);holder.append(card);
  }
  for(const old of oldCards.values())old.remove();holder.querySelectorAll('.watchempty').forEach(e=>e.remove());holder.scrollTop=scroll;
  if(!pins.length){const empty=document.createElement('p');empty.className='watchempty';empty.textContent=watchPins().length?'Không có mã ghim thuộc nhóm này. Chọn Tất cả hoặc Chỉnh ghim.':'Chưa ghim mặt hàng. Bấm Chỉnh ghim để chọn.';holder.append(empty);}
@@ -444,13 +444,6 @@ function openWideChart(){
 }
 function windowChart(){chart();}
 function unifyMarketUI(){
- const fuelFoot=$('market').querySelector('.source'),connection=document.querySelector('.connection');connection.lastElementChild.remove();fuelFoot.append($('effective'),connection);
- const glyph=(id,paths)=>{const b=$(id);if(!b)return;const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.innerHTML=paths;b.replaceChildren(svg);};
- glyph('refresh','<path d="M20 7v5h-5M4 17v-5h5M5.4 7a7.5 7.5 0 0 1 12.4-1L20 9M4 15l2.2 3A7.5 7.5 0 0 0 18.6 17"/>');
- glyph('openupdates','<path d="M12 3v12m-5-5 5 5 5-5M5 17v4h14v-4"/>');
- $('gold').querySelector('.titlebar h1').textContent='Vàng';$('detailback').textContent='‹ Trở lại';$('goldback').textContent='‹ Trở lại';
- $('gold').querySelector('[data-gold-tab]').parentElement.classList.add('detailtabs');
-
  for(const id of ['market','agriculture','gold']){const table=$(id)?.querySelector('table');if(table&&!table.parentElement.classList.contains('markettable')){const wrap=document.createElement('div');wrap.className='markettable';table.before(wrap);wrap.append(table);}}
  const expand=document.createElement('button');expand.className='quiet chartfullscreen';expand.textContent='Mở rộng biểu đồ ↗';expand.onclick=openWideChart;$('detailchart').prepend(expand);
  const goldExpand=expand.cloneNode(true);goldExpand.onclick=openWideChart;$('goldchartpanel').prepend(goldExpand);
