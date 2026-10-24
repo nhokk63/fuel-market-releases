@@ -57,3 +57,15 @@
 #gold.trendview .goldquotes small{font-size:11px}
 #gold.trendview #goldaitime,#gold.trendview #goldstatus{font-size:10px}
 #gold.trendview #goldtrendpanel{gap:5px}
+
+#watchlist{gap:6px}#watchrows{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-bottom:8px}
+.watchcard{width:100%;text-align:left;border:1px solid #253139;background:#121a20;color:var(--ink);border-radius:12px;padding:12px;flex-shrink:0}
+.watchhead{display:flex;justify-content:space-between;gap:8px;align-items:center}.watchhead b{font-size:13px}.watchhead span{font-size:10px}
+.watchvalue{font-size:27px;font-weight:700;margin:6px 0 2px;font-variant-numeric:tabular-nums}.watchcard small{display:block;font-size:10px;color:var(--muted)}
+.watchfresh{white-space:pre-line;line-height:1.5;margin-top:6px}.watchfresh.stale{color:#d2ad69}
+.reportsummary{display:grid;gap:8px;white-space:normal}.reportsummary>div{padding:9px 10px;background:#15251f;border-left:2px solid var(--green);border-radius:4px}.reportsummary b{font-size:11px;color:var(--green);text-transform:uppercase;letter-spacing:.4px}.reportsummary p{font-size:13px;margin:4px 0 0!important;line-height:1.45}
+.reportnotice{display:block;color:var(--muted);font-size:10px;line-height:1.5;white-space:normal;margin:10px 0}
+#aireason details,#goldaitext details{white-space:pre-wrap}#aireason summary,#goldaitext summary{color:var(--green);padding:10px 0;cursor:pointer;font-weight:600}
+#detailmeta,#goldmeta{white-space:pre-line;font-size:10px;line-height:1.4}nav button{min-width:0;font-size:9px}
+
+.watchcard{position:relative}.watchspark{width:85px;height:25px;position:absolute;right:12px;top:42px}.watchvalue{padding-right:80px;font-size:25px}

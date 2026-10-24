@@ -14,7 +14,7 @@ async function syncRice(){try{await SharedMarket.sync();}catch{}}
 async function legacySyncRice(){
  if(riceBusy||!window.Updater)return;riceBusy=true;writeStore('rice-status',{text:'Đang kiểm tra bảng giá lúa khô…',at:new Date().toISOString()});
  try{const before=riceQuotes(),quotes=parseRice(await bridgeCall('fetchHistory',[RICE_SOURCE],45000));if(!quotes.length)throw Error('Nguồn chưa có dòng ghi rõ lúa khô');
- writeStore('rice-quotes',mergeQuotes(before,quotes));
+ writeStore('rice-quotes',mergeQuotes(before,quotes));recordPriceCheck('rice');
  for(const q of quotes){const old=before.filter(x=>cauKey(x)===cauKey(q)).at(-1);if(!old||q.day>=old.day)agriNotice('rice',old?{...old,sample:cauKey(old)}:null,{...q,sample:cauKey(q)});}
  writeStore('rice-status',{text:'Đã đọc '+quotes.length+' báo giá lúa khô · Ngày '+quotes.map(q=>q.day).sort().at(-1),at:new Date().toISOString()});
  }catch(e){writeStore('rice-status',{text:'Chưa tải được giá lúa khô: '+e.message+' · Giữ ngày giá đã lưu',at:new Date().toISOString()});}
@@ -77,18 +77,18 @@ function syncAgri(force=false){
  priceAgriAttempt=Date.now();
  priceAgriPending=Promise.resolve().then(async()=>{
  const failures=[];
- const extra=Promise.allSettled([legacySyncRice(),bridgeCall('fetchHistory',[CAU_SOURCE],25000).then(html=>persistCauQuotes(parseCau(html))).catch(e=>writeStore('cau-search',{at:new Date().toISOString(),status:'Nguồn cau chưa cập nhật: '+e.message}))]);
+ const extra=Promise.allSettled([legacySyncRice(),bridgeCall('fetchHistory',[CAU_SOURCE],25000).then(html=>{persistCauQuotes(parseCau(html));recordPriceCheck('cau');}).catch(e=>writeStore('cau-search',{at:new Date().toISOString(),status:'Nguồn cau chưa cập nhật: '+e.message}))]);
  await Promise.all(['coffee','pepper'].map(async kind=>{try{
  const next=parseAgri(await bridgeCall('fetch',[AGRI_SOURCES[kind]],25000),kind);
  agri=readStore('agri',agri);const before=agriSeries(kind,'daklak').at(-1);
- agri=mergeAgri(agri,next);writeStore('agri',agri);agriNotice(kind,before,agriSeries(kind,'daklak').at(-1));
+ agri=mergeAgri(agri,next);writeStore('agri',agri);recordPriceCheck(kind);agriNotice(kind,before,agriSeries(kind,'daklak').at(-1));
  }catch(e){failures.push(AGRI_LABELS[kind]+': '+e.message);}}));
  await extra;writeStore('agri-sync',{at:new Date().toISOString(),error:failures.join(' · ')});
  if(document.getElementById('agrilist'))renderAgri();
  if(typeof page!=='undefined'&&page==='detail'&&typeof renderDetail==='function')renderDetail();
  }).finally(()=>{priceAgriPending=null;});return priceAgriPending;
 }
-async function legacySyncAgri(){syncRice();if(agriBusy)return;if(window.MarketAPI&&!MarketAPI.acquire()){agri=readStore('agri',agri);agri.cau=mergeQuotes(CAU_BOOTSTRAP,agri.cau||[]);showCauRefresh();return;}agriBusy=true;agri=readStore('agri',agri);persistCauQuotes(CAU_BOOTSTRAP.filter(q=>!(agri.cau||[]).some(old=>old.day===q.day&&cauKey(old)===cauKey(q))));let failures=[];writeStore('cau-search',{at:new Date().toISOString(),status:'Đang kiểm tra nguồn cau · giữ báo giá có ngày đã lưu'});showCauRefresh();const cauFetch=bridgeCall('fetchHistory',[CAU_SOURCE],45000).then(html=>{const quotes=parseCau(html);const latest=quotes.map(q=>q.day).sort().at(-1);writeStore('cau-search',{at:new Date().toISOString(),status:'Đọc nguồn trực tiếp · Ngày '+latest+(latest===vnDay()?'':' · Chưa có giá hôm nay')});persistCauQuotes(quotes);return {quotes};}).catch(error=>{writeStore('cau-search',{at:new Date().toISOString(),status:'Nguồn trực tiếp lỗi: '+error.message+' · Giữ báo giá đã lưu'});showCauRefresh();return {error};});try{for(const kind of ['coffee','pepper']){try{const before=agriSeries(kind,'daklak').at(-1),next=parseAgri(await bridgeCall('fetch',[AGRI_SOURCES[kind]]),kind);agri=mergeAgri(agri,next);writeStore('agri',agri);agriNotice(kind,before,agriSeries(kind,'daklak').at(-1));}catch(e){failures.push(AGRI_LABELS[kind]+': '+e.message);}}
+async function legacySyncAgri(){syncRice();if(agriBusy)return;if(window.MarketAPI&&!MarketAPI.acquire()){agri=readStore('agri',agri);agri.cau=mergeQuotes(CAU_BOOTSTRAP,agri.cau||[]);showCauRefresh();return;}agriBusy=true;agri=readStore('agri',agri);persistCauQuotes(CAU_BOOTSTRAP.filter(q=>!(agri.cau||[]).some(old=>old.day===q.day&&cauKey(old)===cauKey(q))));let failures=[];writeStore('cau-search',{at:new Date().toISOString(),status:'Đang kiểm tra nguồn cau · giữ báo giá có ngày đã lưu'});showCauRefresh();const cauFetch=bridgeCall('fetchHistory',[CAU_SOURCE],45000).then(html=>{const quotes=parseCau(html);const latest=quotes.map(q=>q.day).sort().at(-1);writeStore('cau-search',{at:new Date().toISOString(),status:'Đọc nguồn trực tiếp · Ngày '+latest+(latest===vnDay()?'':' · Chưa có giá hôm nay')});persistCauQuotes(quotes);return {quotes};}).catch(error=>{writeStore('cau-search',{at:new Date().toISOString(),status:'Nguồn trực tiếp lỗi: '+error.message+' · Giữ báo giá đã lưu'});showCauRefresh();return {error};});try{for(const kind of ['coffee','pepper']){try{const before=agriSeries(kind,'daklak').at(-1),next=parseAgri(await bridgeCall('fetch',[AGRI_SOURCES[kind]]),kind);agri=mergeAgri(agri,next);writeStore('agri',agri);recordPriceCheck(kind);agriNotice(kind,before,agriSeries(kind,'daklak').at(-1));}catch(e){failures.push(AGRI_LABELS[kind]+': '+e.message);}}
  let quotes=[];const cauErrors=[];
  const direct=await cauFetch;if(direct.error)cauErrors.push(direct.error.message);else quotes=direct.quotes;
  const config=window.Updater?JSON.parse(Updater.state()):{};

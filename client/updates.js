@@ -1,4 +1,4 @@
-const FM_UI_BUILD=1090406;
+const FM_UI_BUILD=1090407;
 'use strict';let checkedRelease=null,checkingRelease=false,installingRelease=false,updateAttempt=0,updateMessage='',releasePage=0;
 const releaseState=()=>{try{return window.Updater?JSON.parse(Updater.state()):{apk:10900,ota:0,highest:0,url:''};}catch{return {apk:10900,ota:0,highest:0,url:''};}};
 const versionName=n=>`${Math.floor(n/10000)}.${Math.floor(n/100)%100}.${n%100}`;
@@ -24,3 +24,5 @@ for(const kind of ['ota','apk'])$('install'+kind).onclick=async()=>{
 $('rollbackota').onclick=()=>{if(window.Updater&&!installingRelease&&confirm('Khôi phục giao diện trước? Dữ liệu đã lưu được giữ lại.'))Updater.rollback();};$('installcached').onclick=()=>{};
 function autoCheckUpdates(){if(!document.hidden&&window.Updater&&Date.now()-updateAttempt>6*3600000)checkUpdates(true);}
 renderUpdates();if(window.Updater){setTimeout(autoCheckUpdates,2000);document.addEventListener('visibilitychange',()=>{renderUpdates();autoCheckUpdates();});window.addEventListener('online',()=>{if(Date.now()-updateAttempt>60000)checkUpdates(true);});setInterval(autoCheckUpdates,60000);if(window.fmBootOk&&window.fmAgriBoot&&window.fmAiBoot)setTimeout(()=>Updater.readyFor?Updater.readyFor(FM_UI_BUILD):Updater.ready(),800);}
+
+mountWatchlist();

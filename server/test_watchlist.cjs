@@ -1,0 +1,12 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const {parseHTML}=require('../../test-runtime/node_modules/linkedom');const {document}=parseHTML('<html><body><div id="watchrows"></div><article id="report"></article></body></html>');
+const source=fs.readFileSync((process.env.CLIENT_DIR||__dirname+'/../client/')+'insights.js','utf8'),store={};
+const c=vm.createContext({document,Date,Intl,console,Number,Set,readStore:(k,d)=>store[k]??d,writeStore:(k,v)=>store[k]=v,AGRI_LABELS:{coffee:'Cà phê',pepper:'Tiêu',cau:'Cau'},PRODUCTS:[{id:'e5',label:'E5',name:'92'}],$:(id)=>document.getElementById(id),fmt:n=>n.toLocaleString('vi-VN'),directionLabel:d=>({flat:'Có thể đi ngang',unknown:'Chưa đủ cơ sở'})[d]});
+vm.runInContext(source.slice(source.indexOf('function renderReportText('),source.indexOf('function expandReport(')),c);
+vm.runInContext(source.slice(source.indexOf('function freshnessText(')),c);
+assert.deepEqual([...vm.runInContext('watchPins()',c)],['coffee','pepper','cau']);store['watch-pins']=['pepper','bogus','pepper'];assert.deepEqual([...vm.runInContext('watchPins()',c)],['pepper']);store['watch-pins']=[];vm.runInContext('renderWatchlist()',c);assert(document.getElementById('watchrows').textContent.includes('Chưa ghim'));
+c.x={direction:'flat',horizon:'1–2 tuần',reason:'Giá và bối cảnh thị trường\nGiá 140.000 đ/kg\n\nPhân tích động lực\nNguồn cung tăng [1]\n\nTín hiệu cần theo dõi\nSản lượng vụ mới [1]',risk:'Nguồn chưa đầy đủ',generatedAt:'2026-10-24T01:00:00Z'};c.area=document.getElementById('report');vm.runInContext('renderReportOverview(area,x)',c);assert.equal(c.area.querySelectorAll('.reportsummary>div').length,3);assert(c.area.querySelector('.reportsummary').textContent.includes('Nguồn cung tăng'));assert(!c.area.querySelector('.reportsummary').textContent.includes('Giá 140'));assert(c.area.querySelector('details').textContent.includes('Giá 140'));c.area.scrollTop=80;vm.runInContext('renderReportOverview(area,x)',c);assert.equal(c.area.scrollTop,80);
+assert(vm.runInContext("freshnessText('2026-10-23','2026-10-24T02:00:00Z','agri',Date.parse('2026-10-24T03:00:00Z'))",c).includes('Giá cũ'));
+assert(!vm.runInContext("freshnessText('2026-10-24',null,'agri',Date.parse('2026-10-24T03:00:00Z'))",c).includes('Giá cũ'));
+assert.equal(vm.runInContext('watchSpark([140000])',c),null);assert(vm.runInContext('watchSpark([140000,140000]).outerHTML',c).includes('0,12 100,12'));
+console.log('PASS: pin defaults/persistence/empty, report three highlights/full text/scroll, date versus check time, honest chart points');
