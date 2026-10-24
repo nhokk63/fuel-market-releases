@@ -1,0 +1,21 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const {parseHTML}=require('../../test-runtime/node_modules/linkedom');const root=process.env.CLIENT_DIR||__dirname+'/../client/';
+const {window,document}=parseHTML(fs.readFileSync(root+'index.html','utf8'));
+Object.defineProperty(window.HTMLSelectElement.prototype,'value',{configurable:true,get(){return this._value||this.querySelector('option')?.value||''},set(v){this._value=String(v)}});
+const storage=new Map(),frames=[];
+const c=vm.createContext({document,console,URL,Date,Intl,Map,Set,DOMParser:window.DOMParser,localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},setTimeout:()=>0,clearTimeout:()=>{},setInterval:()=>0,requestAnimationFrame:fn=>frames.push(fn),innerHeight:800,addEventListener:()=>{}});c.window=c;
+for(const name of ['data','app','agri','insights','gold','updates'])vm.runInContext(fs.readFileSync(root+name+'.js','utf8'),c,{filename:name+'.js'});
+while(frames.length)frames.shift()();
+assert.equal(vm.runInContext('page',c),'watchlist');assert.equal(document.querySelectorAll('nav button').length,5);assert.equal(document.querySelectorAll('.watchcard').length,3);
+vm.runInContext("go('gold');Gold.open('world')",c);vm.runInContext("openDetail('pepper','analysis')",c);while(frames.length)frames.shift()();assert.equal(document.querySelectorAll('#aireason .reportsummary>div').length,3);
+vm.runInContext("writeStore('watch-pins',['e5','gold']);go('watchlist')",c);while(frames.length)frames.shift()();assert.equal(document.querySelectorAll('.watchcard').length,2);
+console.log('PASS: all six production scripts boot, five navigation tabs, default pins, gold/detail navigation, report summary');
+
+vm.runInContext("writeStore('watch-pins',['coffee','pepper','e5','gold']);writeStore('watch-filter','agri');go('watchlist')",c);assert.equal(document.querySelectorAll('.watchcard').length,2);assert(!document.getElementById('watchholdings'));assert(!document.getElementById('watchalerts'));
+vm.runInContext("reorderWatchPin('pepper',-1)",c);assert.equal(vm.runInContext('watchPins()[0]',c),'pepper');vm.runInContext("reorderWatchPin('pepper',-1)",c);assert.equal(vm.runInContext('watchPins()[0]',c),'pepper');
+vm.runInContext("openDetail('pepper','analysis');returnFromDetail()",c);assert.equal(vm.runInContext('page',c),'watchlist');
+vm.runInContext("Gold.open('world','watchlist');go('gold')",c);document.getElementById('goldback').onclick();assert.equal(vm.runInContext('page',c),'watchlist');
+assert(document.querySelector('#market .markettable table'));assert(document.querySelector('#agriculture .markettable table'));assert(document.querySelector('#gold .markettable table'));assert(!document.querySelector('[data-detail="overview"]'));
+const create=document.createElement.bind(document);document.createElement=tag=>{const el=create(tag);if(tag==='dialog'){el.showModal=()=>el.setAttribute('open','');el.close=()=>el.dispatchEvent(new window.Event('close'));}return el;};
+vm.runInContext("openDetail('pepper','chart');openWideChart()",c);assert(document.querySelector('dialog #agrichart'));document.querySelector('dialog').close();assert(document.querySelector('#detailchart #agrichart'));
+(async()=>{c.refreshCalls=[];vm.runInContext("refresh=async()=>refreshCalls.push('fuel');syncAgri=async()=>refreshCalls.push('agri');Gold.sync=async()=>refreshCalls.push('gold');go('watchlist')",c);await vm.runInContext('refreshVisibleMarket()',c);assert.deepEqual(c.refreshCalls.sort(),['agri','fuel','gold']);c.refreshCalls=[];vm.runInContext("go('agriculture')",c);await vm.runInContext('refreshVisibleMarket()',c);assert.deepEqual(c.refreshCalls,['agri']);console.log('PASS: group filters, pin reorder boundaries, detail/gold return, unified tables, fullscreen restore and scoped refresh');})().catch(e=>{console.error(e);process.exit(1)});

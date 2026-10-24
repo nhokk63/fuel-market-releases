@@ -159,15 +159,16 @@ if(document.getElementById('aipicker')){
  setInterval(()=>{if(!document.hidden)syncAi();},15000);
 }
 
-let detailId='e10',detailTab='chart',aiTextPage=0;
+let detailId='e10',detailTab='chart',aiTextPage=0,detailOrigin='watchlist';
 function analysisAsset(id){const a=id==='rice'?{id,region:'',series:[]}:aiInputs().assets.find(a=>a.id===id);if(!a)return {id,region:'',series:[]};if(Object.hasOwn(AGRI_LABELS,id)){a.region=['cau','rice'].includes(id)?(agriSeries(id,agriRegion).at(-1)?.region||'Đắk Lắk'):agriRegion==='daklak'?'Đắk Lắk':'Khoảng các vùng khảo sát Việt Nam';a.series=agriSeries(id,agriRegion).slice(-45).map(x=>({day:x.day,low:x.low,high:x.high,source:x.source,grade:x.grade||'',author:x.author||''}));}return a;}
 function analysisScope(a){return JSON.stringify([a.region,['cau','rice'].includes(a.id)?a.series.at(-1)?.grade||'':'',['cau','rice'].includes(a.id)?a.series.at(-1)?.author||'':'']);}
 function openDetail(id,tab='chart'){
- if(!Object.hasOwn(AI_LABELS,id))return;aiTextPage=0;detailId=id;const ag=Object.hasOwn(AGRI_LABELS,id);
+ if(!Object.hasOwn(AI_LABELS,id))return;if(page!=='detail')detailOrigin=page;aiTextPage=0;detailId=id;const ag=Object.hasOwn(AGRI_LABELS,id);
  if(ag){agriSelected=id;renderAgri();}else{selected=PRODUCTS.findIndex(p=>p.id===id);render();}
- $('aipicker').value=id;go('detail');document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.go===(ag?'agriculture':'market')));renderDetail();showDetailTab(tab);
+ $('aipicker').value=id;go('detail');document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.go===(detailOrigin==='watchlist'?'watchlist':ag?'agriculture':'market')));renderDetail();showDetailTab(tab);
 }
 function renderDetail(){const ag=Object.hasOwn(AGRI_LABELS,detailId);$('detailname').textContent=ag?AGRI_LABELS[detailId]:PRODUCTS[selected].label;updateDetailPin();
+ const cauPicker=$('causeries');$('detail').insertBefore(cauPicker,$('detail').querySelector('.detailquote'));cauPicker.hidden=detailId!=='cau';cauPicker.onchange=()=>{cauSelected=cauPicker.value;renderDetail();if(detailTab==='chart')drawAgriChart();};
  const ricePicker=$('riceseries');ricePicker.hidden=detailId!=='rice';if(detailId==='rice'){riceSeries();ricePicker.replaceChildren();for(const key of riceKeys()){const o=document.createElement('option');o.value=key;const parts=JSON.parse(key);o.textContent=parts[1]+' · '+parts[0];ricePicker.append(o);}ricePicker.value=riceSelected;ricePicker.onchange=()=>{riceSelected=ricePicker.value;agriPicked=-1;renderDetail();if(detailTab==='chart')drawAgriChart();if(detailTab==='analysis')renderAi();};}
  const series=ag?agriSeries(detailId):assetHistory(detailId),last=series.at(-1),prev=series.at(-2);const diff=ag?agriDelta(series):prev?last.prices[detailId]-prev.prices[detailId]:null;
  $('detailprice').textContent=ag?moneyRange(last):last?fmt(last.prices[detailId]):'—';$('detaildelta').textContent=diff===null?'Chưa có mốc so sánh':(diff>0?'↗ +':diff<0?'↘ ':'→ ')+fmt(diff)+' đ · so mốc trước';$('detaildelta').style.color=diff===null||diff===0?'var(--muted)':diff>0?'var(--green)':'var(--red)';
@@ -178,16 +179,16 @@ function renderDetail(){const ag=Object.hasOwn(AGRI_LABELS,detailId);$('detailna
  $('detailinfo').textContent=detailId==='rice'?(last?[last.grade,last.region,last.author,'Nguồn chưa công bố độ ẩm; báo giá tham khảo'].join(' · '):'Chưa có báo giá lúa khô phù hợp'):ag?(detailId==='cau'?(last?[last.region,last.grade,last.author,last.verification==='ai-extracted'?'AI trích xuất · cần đối chiếu nguồn':last.verification==='source-table'?'Trích bảng giá tham khảo · không phải cam kết thu mua':'Nguồn đã đối chiếu'].join(' · '):'Chưa có báo giá cau đủ ngày, loại và nguồn.'):agriRegion==='all'?'Giá thấp–cao của các vùng khảo sát, không phải giá bình quân cả nước.':'Giá thu mua tham khảo tại Đắk Lắk.') : PRODUCTS[selected].name+' · Giá bán lẻ vùng 2 tham khảo.';
  $('detailsource').disabled=!last;$('detailsource').onclick=()=>last&&window.Updater?Updater.openSource(last.source||SOURCE):last&&openSource(last.source||SOURCE);
  $('detailnews').textContent=detailId==='rice'?(readStore('rice-status',{}).text||'Báo giá lưu có ngày/nguồn. Chưa có nguồn lúa khô Đắk Lắk.') :detailId==='cau'?(readStore('cau-search',{}).status||'Bản cau 1080103 · Báo giá lưu có nguồn; đang chờ kiểm tra trực tuyến.') :!ag&&validForecast(data.forecast)?'Tin kỳ tới: '+data.forecast.title:'';
- const holder=$('detailchart');const chosen=ag?$('agrichart'):$('chart');holder.append(chosen);chosen.hidden=false;
+ const holder=$('detailchart');const chosen=ag?$('agrichart'):$('chart');if(!chosen.closest('dialog'))holder.append(chosen);chosen.hidden=false;
  const other=ag?$('chart'):$('agrichart');other.hidden=true;
 }
 function showDetailTab(tab){if(tab==='overview')tab='chart';detailTab=tab;for(const key of ['overview','chart','analysis'])$('detail'+key).hidden=key!==tab;document.querySelectorAll('[data-detail]').forEach(b=>{b.classList.toggle('selected',b.dataset.detail===tab);b.setAttribute('aria-selected',b.dataset.detail===tab);});if(tab==='chart')requestAnimationFrame(()=>Object.hasOwn(AGRI_LABELS,detailId)?drawAgriChart():chart());$('detail').classList.toggle('trendview',tab==='analysis');if(tab==='analysis')renderAi();}
 if(document.getElementById('detail')){
  for(const id of ['chart','agrichart']){const el=$(id);el.classList.remove('page');el.classList.add('detailchartinner');el.querySelector('.titlebar').remove();}
  const ai=$('aiforecast');ai.classList.remove('page');ai.classList.add('detailaiinner');ai.querySelector('.titlebar').remove();$('aipicker').hidden=true;$('detailanalysis').append(ai);ai.hidden=false;
- document.querySelectorAll('[data-detail]').forEach(b=>b.onclick=()=>showDetailTab(b.dataset.detail));$('detailback').onclick=()=>go(Object.hasOwn(AGRI_LABELS,detailId)?'agriculture':'market');$('detailanalyze').onclick=()=>showDetailTab('analysis');
+ document.querySelectorAll('[data-detail]').forEach(b=>b.onclick=()=>showDetailTab(b.dataset.detail));$('detailback').onclick=returnFromDetail;$('detailanalyze').onclick=()=>showDetailTab('analysis');
  const sourceInfo=document.createElement('details');sourceInfo.className='detailsourceinfo';const sourceTitle=document.createElement('summary');sourceTitle.textContent='Nguồn giá & thông tin dữ liệu';sourceInfo.append(sourceTitle);for(const id of ['detailinfo','detailcoverage','detailsource','detailnews'])sourceInfo.append($(id));$('detail').append(sourceInfo);
- document.querySelector('#aiconfig .titlebar button').onclick=()=>{go('detail');renderDetail();showDetailTab('analysis');};
+ document.querySelector('#aiconfig .titlebar button').onclick=()=>go('settings');
  window.addEventListener('resize',()=>{if(page==='detail'&&detailTab==='chart')Object.hasOwn(AGRI_LABELS,detailId)?drawAgriChart():chart();});
 }
 
@@ -324,25 +325,28 @@ function watchSpark(values){
 }
 function renderWatchlist(){
  const holder=$('watchrows');if(!holder)return;
- const catalog=watchCatalog(),pins=watchPins(),signature=JSON.stringify(pins.map(id=>[id,watchQuote(id)]));if(holder.dataset.snapshot===signature)return;holder.dataset.snapshot=signature;const scroll=holder.scrollTop,oldCards=new Map([...holder.querySelectorAll('[data-asset]')].map(c=>[c.dataset.asset,c]));
- for(const id of pins){const q=watchQuote(id),fingerprint=JSON.stringify(q),old=oldCards.get(id);oldCards.delete(id);if(old?.dataset.quote===fingerprint){holder.append(old);continue;}const card=document.createElement('button');card.className='watchcard';card.dataset.asset=id;card.dataset.quote=fingerprint;card.dataset.price=String(q.value);if(old&&old.dataset.price!==String(q.value))card.classList.add('pricechanged');if(old)old.remove();card.onclick=()=>{if(id==='gold'){go('gold');Gold.open('world');}else{agriRegion='daklak';openDetail(id);}};
+ const catalog=watchCatalog(),pins=watchPins().filter(id=>watchFilterMatches(id,readStore('watch-filter','all'))),signature=JSON.stringify(pins.map(id=>[id,watchQuote(id)]));if(holder.dataset.snapshot===signature)return;holder.dataset.snapshot=signature;const scroll=holder.scrollTop,oldCards=new Map([...holder.querySelectorAll('[data-asset]')].map(c=>[c.dataset.asset,c]));
+ for(const id of pins){const q=watchQuote(id),fingerprint=JSON.stringify(q),old=oldCards.get(id);oldCards.delete(id);if(old?.dataset.quote===fingerprint){holder.append(old);continue;}const card=document.createElement('button');card.className='watchcard';card.dataset.asset=id;card.dataset.quote=fingerprint;card.dataset.price=String(q.value);if(old&&old.dataset.price!==String(q.value))card.classList.add('pricechanged');if(old)old.remove();card.onclick=()=>{if(id==='gold'){Gold.open('world','watchlist');go('gold');}else{agriRegion='daklak';openDetail(id);}};
  const head=document.createElement('div');head.className='watchhead';const title=document.createElement('b');title.textContent=catalog.find(x=>x.id===id).label;title.prepend(marketIcon(id));const delta=document.createElement('span');delta.className=q.delta>0?'green':q.delta<0?'red':'muted';delta.textContent=q.delta==null?'Chưa có mốc trước':(q.delta>0?'↗ +':q.delta<0?'↘ ':'→ ')+fmt(q.delta)+' đ';head.append(title,delta);
  const quote=document.createElement('div');quote.className='watchvalue';quote.textContent=Number.isFinite(q.value)?fmt(q.value)+(q.high>q.value?'–'+fmt(q.high):''):'—';const unit=document.createElement('small');unit.textContent=q.unit+' · '+q.region;
  const fresh=document.createElement('small');fresh.className='watchfresh';fresh.textContent=freshnessText(q.sourceAt,q.checkedAt,q.kind).replace('\n',' · ');if(fresh.textContent.includes('Giá cũ'))fresh.classList.add('stale');
  card.append(head,quote,unit);const spark=watchSpark(q.series);if(spark)card.append(spark);card.append(fresh);holder.append(card);
  }
  for(const old of oldCards.values())old.remove();holder.querySelectorAll('.watchempty').forEach(e=>e.remove());holder.scrollTop=scroll;
- if(!pins.length){const empty=document.createElement('p');empty.className='watchempty';empty.textContent='Chưa ghim mặt hàng. Bấm Chỉnh ghim để chọn.';holder.append(empty);}
+ if(!pins.length){const empty=document.createElement('p');empty.className='watchempty';empty.textContent=watchPins().length?'Không có mã ghim thuộc nhóm này. Chọn Tất cả hoặc Chỉnh ghim.':'Chưa ghim mặt hàng. Bấm Chỉnh ghim để chọn.';holder.append(empty);}
 }
 function editWatchPins(){
- const dialog=document.createElement('dialog');dialog.className='reportdialog';const bar=document.createElement('div');bar.className='reportbar';const title=document.createElement('b');title.textContent='Mặt hàng theo dõi';const done=document.createElement('button');done.textContent='Xong';done.onclick=()=>dialog.close();bar.append(title,done);dialog.append(bar);const body=document.createElement('div');body.className='reportbody';
- for(const x of watchCatalog()){const label=document.createElement('label');label.className='setting';const name=document.createElement('span');name.textContent=x.label;const input=document.createElement('input');input.type='checkbox';input.checked=watchPins().includes(x.id);input.onchange=()=>{const pins=watchPins();writeStore('watch-pins',input.checked?[...pins,x.id]:pins.filter(id=>id!==x.id));renderWatchlist();};label.append(name,input);body.append(label);}dialog.append(body);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove());dialog.showModal();
+ const dialog=document.createElement('dialog');dialog.className='reportdialog';const bar=document.createElement('div');bar.className='reportbar';const title=document.createElement('b');title.textContent='Mã theo dõi · sắp xếp thứ tự';const done=document.createElement('button');done.textContent='Xong';done.onclick=()=>dialog.close();bar.append(title,done);dialog.append(bar);const body=document.createElement('div');body.className='reportbody pinmanager';
+ function paint(){body.replaceChildren();const pins=watchPins(),catalog=watchCatalog(),ordered=[...pins.map(id=>catalog.find(x=>x.id===id)),...catalog.filter(x=>!pins.includes(x.id))];
+ for(const x of ordered){const row=document.createElement('div');row.className='pinrow';const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.checked=pins.includes(x.id);input.onchange=()=>{const saved=watchPins();writeStore('watch-pins',input.checked?[...saved,x.id]:saved.filter(id=>id!==x.id));renderWatchlist();paint();};const name=document.createElement('span');name.textContent=x.label;label.append(input,marketIcon(x.id),name);row.append(label);
+ if(pins.includes(x.id))for(const [step,text]of [[-1,'↑'],[1,'↓']]){const move=document.createElement('button');move.textContent=text;move.setAttribute('aria-label',(step<0?'Đưa lên: ':'Đưa xuống: ')+x.label);const at=pins.indexOf(x.id);move.disabled=at+step<0||at+step>=pins.length;move.onclick=()=>{reorderWatchPin(x.id,step);renderWatchlist();paint();};row.append(move);}body.append(row);}}
+ dialog.append(body);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove());paint();dialog.showModal();
 }
 function mountWatchlist(){
- const section=document.createElement('section');section.id='watchlist';section.className='page';section.hidden=true;section.innerHTML='<div class="titlebar"><h1>Theo dõi</h1><button id="editwatch" class="quiet">Chỉnh ghim ☆</button></div><div class="hint">Giá tham khảo · Chạm mặt hàng để xem chi tiết</div><div class="watchtools"><button id="watchdensity">Gọn</button><button id="watchalerts">Cảnh báo giá</button><button id="watchholdings">Hàng đang giữ</button></div><div id="watchrows"></div>';
- document.querySelector('main').append(section);$('editwatch').onclick=editWatchPins;$('watchalerts').onclick=()=>openMarketTools('alerts');$('watchholdings').onclick=()=>openMarketTools('holdings');$('watchdensity').onclick=()=>{writeStore('watch-density',readStore('watch-density','compact')==='compact'?'full':'compact');applyWatchDensity();};applyWatchDensity();
+ const section=document.createElement('section');section.id='watchlist';section.className='page';section.hidden=true;section.innerHTML='<div class="titlebar"><h1>Theo dõi</h1><button id="editwatch" class="quiet">Chỉnh ghim ☆</button></div><div class="hint">Giá tham khảo · Chạm mặt hàng để xem chi tiết</div><div class="watchtools"><button id="watchdensity">Gọn</button><select id="watchfilter" aria-label="Lọc mặt hàng"><option value="all">Tất cả</option><option value="agri">Nông sản</option><option value="fuel">Xăng dầu</option><option value="gold">Vàng</option></select></div><div id="watchrows"></div>';
+ document.querySelector('main').append(section);$('editwatch').onclick=editWatchPins;$('watchfilter').value=readStore('watch-filter','all');$('watchfilter').onchange=()=>{writeStore('watch-filter',$('watchfilter').value);$('watchrows').dataset.snapshot='';$('watchrows').scrollTop=0;renderWatchlist();};$('watchdensity').onclick=()=>{writeStore('watch-density',readStore('watch-density','compact')==='compact'?'full':'compact');applyWatchDensity();};applyWatchDensity();
  const nav=document.createElement('button');nav.dataset.go='watchlist';nav.innerHTML='<span>☆</span>Theo dõi';nav.onclick=()=>go('watchlist');document.querySelector('nav').prepend(nav);
- setInterval(()=>{if(!document.hidden){checkPriceTargets();if(page==='watchlist')renderWatchlist();const tool=document.querySelector('.markettoolsdialog[open]');if(tool?.dataset.mode==='holdings')renderMarketToolList('holdings');}},2000);go('watchlist');
+ setInterval(()=>{if(!document.hidden){if(page==='watchlist')renderWatchlist();}},2000);go('watchlist');
 }
 
 // Local SVGs use currentColor: no emoji/font substitutions or remote assets.
@@ -353,7 +357,7 @@ function marketIcon(kind){
  agriculture:'<path d="M12 21V10M12 15C5 15 3 11 3 6c6 0 9 3 9 8M12 11c0-6 3-8 9-8 0 6-3 9-9 9"/>',
  fuel:'<rect x="3" y="3" width="11" height="18" rx="2"/><path d="M3 10h11M6 6h5M14 12h2a2 2 0 0 1 2 2v3a2 2 0 0 0 4 0V9l-4-4M19 6v4h3M2 21h13"/>',
  gold:'<path d="M5 7h14l3 12H2L5 7zM5 7l3-3h8l3 3M8 11h4M7 15h2"/>',
- settings:'<path d="M5 16h14l-2-3V9a5 5 0 0 0-10 0v4l-2 3zM10 20a2 2 0 0 0 4 0M12 2v2"/>',
+ settings:'<circle cx="12" cy="12" r="3"/><path d="M9 3h6l1 3 3 1 2 5-2 5-3 1-1 3H9l-1-3-3-1-2-5 2-5 3-1z"/>',
  coffee:'<ellipse cx="12" cy="12" rx="7" ry="10" transform="rotate(35 12 12)"/><path d="M16 4c-7 2-1 8-8 16"/>',
  pepper:'<path d="M12 3v4M12 5c2-3 5-3 7-2-1 3-4 4-7 2"/><circle cx="9" cy="9" r="2.5"/><circle cx="15" cy="10" r="2.5"/><circle cx="8" cy="15" r="2.5"/><circle cx="14" cy="16" r="2.5"/><circle cx="11" cy="21" r="1.5"/>',
  cau:'<path d="M12 7V3M12 5C8 1 4 3 3 5c4 1 7 1 9 0M12 5c4-4 8-2 9 0-4 1-7 1-9 0"/><ellipse cx="8" cy="14" rx="4" ry="6"/><ellipse cx="16" cy="14" rx="4" ry="6"/><path d="M8 11v6M16 11v6"/>',
@@ -423,4 +427,26 @@ function renderMarketToolList(mode){
  }
  if(mode==='holdings'&&items.length){const sum=document.createElement('p');sum.className='holdingtotal';sum.textContent='Tổng tham khảo từ '+fmt(Math.round(total))+' đ · Định giá được '+valued+'/'+items.length+' mục (có thể dùng giá cũ)';list.prepend(sum);}
  if(!items.length)list.textContent=mode==='alerts'?'Chưa có cảnh báo giá mục tiêu.':'Chưa nhập hàng đang giữ.';
+}
+
+function watchFilterMatches(id,filter){return filter==='all'||filter==='gold'&&id==='gold'||filter==='agri'&&Object.hasOwn(AGRI_LABELS,id)||filter==='fuel'&&PRODUCTS.some(p=>p.id===id);}
+function reorderWatchPin(id,step){const pins=watchPins(),i=pins.indexOf(id),j=i+step;if(i<0||j<0||j>=pins.length)return;[pins[i],pins[j]]=[pins[j],pins[i]];writeStore('watch-pins',pins);}
+function returnFromDetail(){go(document.getElementById(detailOrigin)?detailOrigin:'watchlist');}
+async function refreshVisibleMarket(){
+ const button=$('refresh');if(button.dataset.pending==='1')return;button.dataset.pending='1';button.disabled=true;button.classList.add('spinning');
+ try{const tasks=[];if(page==='watchlist'){tasks.push(refresh(true),syncAgri(true),Gold.sync(true));}else if(page==='gold')tasks.push(Gold.sync(true));else if(page==='agriculture'||page==='detail'&&Object.hasOwn(AGRI_LABELS,detailId))tasks.push(syncAgri(true));else if(page==='market'||page==='detail')tasks.push(refresh(true));else tasks.push(SharedMarket.sync(true));await Promise.allSettled(tasks);if(page==='watchlist')renderWatchlist();if(page==='detail')renderDetail();}
+ finally{button.dataset.pending='0';button.disabled=false;button.classList.remove('spinning');}
+}
+function openWideChart(){
+ const gold=page==='gold',chart=gold?$('goldchartpanel'):Object.hasOwn(AGRI_LABELS,detailId)?$('agrichart'):$('chart');if(!chart||chart.closest('dialog'))return;
+ const original=chart.parentElement,next=chart.nextSibling,dialog=document.createElement('dialog');dialog.className='reportdialog chartdialog';const bar=document.createElement('div');bar.className='reportbar';const title=document.createElement('b');title.textContent=gold?$('goldname').textContent:$('detailname').textContent;const close=document.createElement('button');close.textContent='Đóng ×';close.onclick=()=>dialog.close();bar.append(title,close);dialog.append(bar,chart);document.body.append(dialog);
+ const redraw=()=>gold?Gold.render():Object.hasOwn(AGRI_LABELS,detailId)?drawAgriChart():windowChart();dialog.addEventListener('close',()=>{original.insertBefore(chart,next?.parentElement===original?next:null);dialog.remove();requestAnimationFrame(redraw);});dialog.showModal();requestAnimationFrame(redraw);
+}
+function windowChart(){chart();}
+function unifyMarketUI(){
+ for(const id of ['market','agriculture','gold']){const table=$(id)?.querySelector('table');if(table&&!table.parentElement.classList.contains('markettable')){const wrap=document.createElement('div');wrap.className='markettable';table.before(wrap);wrap.append(table);}}
+ const expand=document.createElement('button');expand.className='quiet chartfullscreen';expand.textContent='Mở rộng biểu đồ ↗';expand.onclick=openWideChart;$('detailchart').prepend(expand);
+ const goldExpand=expand.cloneNode(true);goldExpand.onclick=openWideChart;$('goldchartpanel').prepend(goldExpand);
+ const version=$('settings').querySelector('.titlebar .muted');if(version)version.textContent='';
+ const advanced=document.createElement('details');advanced.className='settingsadvanced';const summary=document.createElement('summary');summary.textContent='Kết nối AI cá nhân · nâng cao';const note=document.createElement('p');note.className='hint';note.textContent='Bản tin thị trường dùng chung tải tự động. Kết nối cá nhân là phần riêng, không thay đổi bản tin chung.';const button=document.createElement('button');button.className='quiet';button.textContent='Mở kết nối cá nhân';button.onclick=()=>go('aiconfig');advanced.append(summary,note,button);$('settings').append(advanced);
 }
